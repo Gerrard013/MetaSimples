@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard | MetaSimples{% endblock %}
+{% block content %}
+<section class="dashboard-header">
+    <span class="eyebrow">Painel comercial</span>
+    <h1>Bem-vindo, {{ current_user.name }}.</h1>
+    <p>Seu painel está pronto. Acompanhe metas, ritmo do mês, resultados e mantenha sua rotina com clareza e consistência.</p>
+</section>
+
+<section class="metrics-grid">
+    <article class="metric-card">
+        <span>Meta de vendas do mês</span>
+        <strong>{{ format_brl(goal.target_sales_month) }}</strong>
+        <small>Meta de ganho: {{ format_brl(goal.target_income_month) }}</small>
+    </article>
+
+    <article class="metric-card">
+        <span>Vendas acumuladas no mês</span>
+        <strong>{{ format_brl(total_sales_month) }}</strong>
+        <small>{{ progress_month }}% da meta mensal</small>
+    </article>
+
+    <article class="metric-card">
+        <span>Resultado de hoje</span>
+        <strong>{{ format_brl(sales_today) }}</strong>
+        <small>{{ progress_day }}% da meta diária</small>
+    </article>
+
+    <article class="metric-card">
+        <span>Ganhos acumulados</span>
+        <strong>{{ format_brl(total_earnings_month) }}</strong>
+        <small>Ganhos hoje: {{ format_brl(earnings_today) }}</small>
+    </article>
+</section>
+
+<section class="dashboard-layout">
+    <div class="content-stack">
+        <section class="panel">
+            <div class="panel-head">
+                <span class="eyebrow">Progresso</span>
+                <h2>Meta mensal</h2>
+                <p>Veja quanto já foi conquistado e quanto ainda falta para bater sua meta.</p>
+            </div>
+
+            <div class="insight-grid">
+                <div class="insight-box">
+                    <span>Meta mensal</span>
+                    <strong>{{ format_brl(goal.target_sales_month) }}</strong>
+                </div>
+                <div class="insight-box">
+                    <span>Falta para bater a meta</span>
+                    <strong>{{ format_brl(remaining_month) }}</strong>
+                </div>
+            </div>
+
+            <div class="field" style="margin-top: 18px;">
+                <label>Progresso mensal</label>
+                <div class="mock-progress">
+                    <span style="width: {{ progress_month }}%;"></span>
+                </div>
+                <small class="field-help">{{ progress_month }}% concluído</small>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head">
+                <span class="eyebrow">Ritmo</span>
+                <h2>Comparativo do mês</h2>
+                <p>{{ rhythm_status }}</p>
+            </div>
+
+            <div class="insight-grid">
+                <div class="insight-box">
+                    <span>Esperado até hoje</span>
+                    <strong>{{ format_brl(expected_until_today) }}</strong>
+                </div>
+                <div class="insight-box">
+                    <span>Diferença do ritmo</span>
+                    <strong>
+                        {% if rhythm_difference >= 0 %}
+                            + {{ format_brl(rhythm_difference) }}
+                        {% else %}
+                            - {{ format_brl(rhythm_difference | abs) }}
+                        {% endif %}
+                    </strong>
+                </div>
+                <div class="insight-box">
+                    <span>Projeção do mês</span>
+                    <strong>{{ format_brl(projection_month) }}</strong>
+                </div>
+                <div class="insight-box">
+                    <span>Falta na projeção</span>
+                    <strong>{{ format_brl(missing_to_projection if missing_to_projection > 0 else 0) }}</strong>
+                </div>
+            </div>
+
+            <p class="field-help" style="margin-top: 14px;">{{ rhythm_hint }}</p>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head">
+                <span class="eyebrow">Resumo operacional</span>
+                <h2>Indicadores rápidos</h2>
+            </div>
+
+            <div class="metrics-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+                <article class="metric-card">
+                    <span>Meta diária</span>
+                    <strong>{{ format_brl(goal.target_sales_day) }}</strong>
+                    <small>Falta hoje: {{ format_brl(remaining_day) }}</small>
+                </article>
+
+                <article class="metric-card">
+                    <span>Ticket médio diário</span>
+                    <strong>{{ format_brl(average_daily_sales) }}</strong>
+                    <small>Média dos lançamentos do mês</small>
+                </article>
+
+                <article class="metric-card">
+                    <span>Taxa de conversão</span>
+                    <strong>{{ conversion_rate }}%</strong>
+                    <small>Fechamentos ÷ atendimentos</small>
+                </article>
+
+                <article class="metric-card">
+                    <span>Checklist de hoje</span>
+                    <strong>{{ checklist_score }}/5</strong>
+                    <small>Constância operacional diária</small>
+                </article>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head">
+                <span class="eyebrow">Últimos registros</span>
+                <h2>Seus últimos 7 lançamentos</h2>
+            </div>
+
+            {% if results %}
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Vendas</th>
+                                <th>Ganhos</th>
+                                <th>Atendimentos</th>
+                                <th>Fechamentos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in results %}
+                            <tr>
+                                <td>{{ item.date.strftime('%d/%m/%Y') }}</td>
+                                <td>{{ format_brl(item.sales_value) }}</td>
+                                <td>{{ format_brl(item.earnings_value) }}</td>
+                                <td>{{ item.attendance_count }}</td>
+                                <td>{{ item.closed_deals }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state-card">
+                    <strong>Você ainda não lançou resultados.</strong>
+                    <p>Assim que registrar o primeiro dia, o dashboard começará a mostrar seus indicadores.</p>
+                    <a href="{{ url_for('main.daily_entry') }}" class="btn-primary">Lançar primeiro dia</a>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+
+    <aside class="sidebar-stack">
+        <section class="panel compact-panel">
+            <div class="panel-head">
+                <span class="eyebrow">Ação rápida</span>
+                <h2>Próximos passos</h2>
+            </div>
+
+            <a href="{{ url_for('main.daily_entry') }}" class="btn-primary full" style="margin-bottom: 12px;">
+                Lançar resultado do dia
+            </a>
+            <a href="{{ url_for('main.checklist') }}" class="btn-secondary full" style="margin-bottom: 12px;">
+                Preencher checklist
+            </a>
+            <a href="{{ url_for('main.settings') }}" class="btn-secondary full">
+                Ajustar metas
+            </a>
+        </section>
+
+        <section class="panel compact-panel">
+            <div class="panel-head">
+                <span class="eyebrow">Destaques</span>
+                <h2>Melhor e pior dia</h2>
+            </div>
+
+            <div class="mini-metric">
+                <span>Melhor dia do mês</span>
+                <strong>
+                    {% if best_day %}
+                        {{ best_day.date.strftime('%d/%m/%Y') }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+                <small>
+                    {% if best_day %}
+                        {{ format_brl(best_day.sales_value) }}
+                    {% else %}
+                        Sem registros
+                    {% endif %}
+                </small>
+            </div>
+
+            <div class="mini-metric">
+                <span>Menor resultado do mês</span>
+                <strong>
+                    {% if worst_day %}
+                        {{ worst_day.date.strftime('%d/%m/%Y') }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+                <small>
+                    {% if worst_day %}
+                        {{ format_brl(worst_day.sales_value) }}
+                    {% else %}
+                        Sem registros
+                    {% endif %}
+                </small>
+            </div>
+
+            <div class="mini-metric">
+                <span>Dias corridos no mês</span>
+                <strong>{{ days_elapsed }}</strong>
+                <small>Base para cálculo de ritmo</small>
+            </div>
+        </section>
+
+        <section class="panel compact-panel">
+            <div class="panel-head">
+                <span class="eyebrow">Checklist do dia</span>
+                <h2>Status de hoje</h2>
+            </div>
+
+            <div class="check-grid">
+                <div class="check-item">
+                    <input type="checkbox" disabled {% if checklist and checklist.leads_answered %}checked{% endif %}>
+                    <span>Leads respondidos</span>
+                </div>
+                <div class="check-item">
+                    <input type="checkbox" disabled {% if checklist and checklist.follow_up_done %}checked{% endif %}>
+                    <span>Follow-up feito</span>
+                </div>
+                <div class="check-item">
+                    <input type="checkbox" disabled {% if checklist and checklist.proposals_sent %}checked{% endif %}>
+                    <span>Propostas enviadas</span>
+                </div>
+                <div class="check-item">
+                    <input type="checkbox" disabled {% if checklist and checklist.post_sale_done %}checked{% endif %}>
+                    <span>Pós-venda feito</span>
+                </div>
+                <div class="check-item">
+                    <input type="checkbox" disabled {% if checklist and checklist.goal_reviewed %}checked{% endif %}>
+                    <span>Meta revisada</span>
+                </div>
+            </div>
+        </section>
+    </aside>
+</section>
+{% endblock %}

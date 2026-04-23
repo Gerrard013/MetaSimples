@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Acesso suspenso | MetaSimples{% endblock %}
+{% block content %}
+<section class="auth-section">
+    <div class="auth-card blocked-card">
+        <span class="eyebrow">Acesso bloqueado</span>
+        <h1>Seu acesso está suspenso</h1>
+        <p>Identificamos inadimplência ou fim do período de teste. Para voltar a usar o MetaSimples, regularize sua situação.</p>
+        <div class="hero-actions">
+            <a href="{{ url_for('main.payment_redirect') }}" class="btn-primary">Ir para pagamento</a>
+            <a href="{{ url_for('auth.login') }}" class="btn-secondary">Tentar login novamente</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

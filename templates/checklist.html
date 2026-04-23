@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Checklist diário | MetaSimples{% endblock %}
+{% block content %}
+<section class="panel narrow">
+    <div class="section-heading">
+        <span class="eyebrow">Consistência</span>
+        <h1>Checklist de alta performance</h1>
+        <p>Marque as ações que sustentam seus resultados e crie disciplina comercial diária.</p>
+    </div>
+    <form method="POST" class="form-grid panel-form">
+        {{ form.hidden_tag() }}
+        <div class="field">
+            <label>{{ form.date.label }}</label>
+            {{ form.date(class_='input') }}
+        </div>
+        <div class="check-grid">
+            <label class="check-item">{{ form.leads_answered() }} <span>Respondi os leads</span></label>
+            <label class="check-item">{{ form.follow_up_done() }} <span>Fiz follow-up</span></label>
+            <label class="check-item">{{ form.proposals_sent() }} <span>Enviei propostas</span></label>
+            <label class="check-item">{{ form.post_sale_done() }} <span>Fiz pós-venda</span></label>
+            <label class="check-item">{{ form.goal_reviewed() }} <span>Revisei a meta do dia</span></label>
+        </div>
+        <button type="submit" class="btn-primary">{{ form.submit.label.text }}</button>
+    </form>
+</section>
+{% endblock %}

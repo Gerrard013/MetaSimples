@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Criar conta | MetaSimples{% endblock %}
+{% block content %}
+<section class="auth-section">
+    <div class="auth-card">
+        <h1>Criar conta</h1>
+        <p>Comece agora sua organização comercial com uma estrutura pronta para celular e produção.</p>
+        <form method="POST" class="form-grid" data-validate-form="register">
+            {{ form.hidden_tag() }}
+            <div class="field">
+                <label>{{ form.name.label }}</label>
+                {{ form.name(class_='input', placeholder='Seu nome') }}
+            </div>
+            <div class="field">
+                <label>{{ form.email.label }}</label>
+                {{ form.email(class_='input', placeholder='voce@email.com', **{'data-email-check':'true'}) }}
+                <small class="field-help" data-feedback-for="email"></small>
+            </div>
+            <div class="field">
+                <label>{{ form.whatsapp.label }}</label>
+                {{ form.whatsapp(class_='input', placeholder='(11) 91234-5678', **{'data-whatsapp-check':'true'}) }}
+                <small class="field-help" data-feedback-for="whatsapp"></small>
+            </div>
+            <div class="field two-col">
+                <div>
+                    <label>{{ form.password.label }}</label>
+                    {{ form.password(class_='input', placeholder='Mínimo de 6 caracteres') }}
+                </div>
+                <div>
+                    <label>{{ form.confirm_password.label }}</label>
+                    {{ form.confirm_password(class_='input', placeholder='Repita a senha') }}
+                </div>
+            </div>
+            <button type="submit" class="btn-primary full">{{ form.submit.label.text }}</button>
+        </form>
+        <p class="auth-footer">Já tem conta? <a href="{{ url_for('auth.login') }}">Entrar</a></p>
+    </div>
+</section>
+{% endblock %}

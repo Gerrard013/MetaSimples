@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% block title %}MetaSimples | Gestão de metas, rotina e performance{% endblock %}
+{% block content %}
+<section class="landing-hero">
+    <div class="landing-hero-grid">
+        <div class="landing-copy">
+            <span class="landing-badge">MetaSimples by G Tech Innovation &amp; Solutions</span>
+
+            <h1 class="landing-title">
+                Transforme sua rotina comercial em
+                <span>clareza, constância e resultado.</span>
+            </h1>
+
+            <p class="landing-subtitle">
+                O MetaSimples ajuda você a organizar metas, registrar vendas, acompanhar ganhos,
+                manter disciplina diária e visualizar sua evolução com um painel simples, moderno
+                e profissional.
+            </p>
+
+            <div class="landing-actions">
+                <a href="{{ url_for('auth.register') }}" class="btn-primary landing-main-cta">
+                    Manter minha vaga
+                </a>
+                <a href="{{ url_for('auth.register') }}" class="btn-secondary">
+                    Criar conta
+                </a>
+                <a href="{{ url_for('auth.login') }}" class="btn-ghost">
+                    Entrar
+                </a>
+            </div>
+
+            <div class="landing-trust-row">
+                <div class="trust-item">
+                    <strong>Mais organização</strong>
+                    <span>para sua rotina comercial</span>
+                </div>
+                <div class="trust-item">
+                    <strong>Mais controle</strong>
+                    <span>sobre metas e resultados</span>
+                </div>
+                <div class="trust-item">
+                    <strong>Mais clareza</strong>
+                    <span>para agir todos os dias</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="landing-visual">
+            <div class="landing-panel-card">
+                <div class="panel-glow"></div>
+
+                <div class="panel-top">
+                    <span class="mini-tag">Painel inteligente</span>
+                    <span class="mini-dot"></span>
+                </div>
+
+                <h2>Seu desempenho em um só lugar</h2>
+                <p>
+                    Tenha visão rápida das metas, ritmo do mês, conversão, checklist e histórico
+                    sem depender de planilhas confusas.
+                </p>
+
+                <div class="landing-metric-grid">
+                    <article class="landing-metric">
+                        <span>Meta mensal</span>
+                        <strong>Controle total</strong>
+                        <small>acompanhe progresso com clareza</small>
+                    </article>
+
+                    <article class="landing-metric">
+                        <span>Rotina diária</span>
+                        <strong>Mais constância</strong>
+                        <small>registre vendas e checklist</small>
+                    </article>
+
+                    <article class="landing-metric">
+                        <span>Indicadores</span>
+                        <strong>Decisão rápida</strong>
+                        <small>veja ritmo, média e conversão</small>
+                    </article>
+
+                    <article class="landing-metric">
+                        <span>Acesso</span>
+                        <strong>Gestão profissional</strong>
+                        <small>controle e organização no uso</small>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="landing-value-section">
+    <div class="section-head">
+        <span class="eyebrow">Valor real para o cliente</span>
+        <h2>Por que o MetaSimples faz diferença no dia a dia?</h2>
+        <p>
+            Porque ele tira a operação da cabeça, organiza a execução e mostra com clareza o que precisa ser feito para evoluir.
+        </p>
+    </div>
+
+    <div class="landing-value-grid">
+        <article class="landing-value-card">
+            <div class="value-icon">🎯</div>
+            <h3>Meta clara</h3>
+            <p>
+                O usuário define a meta e entende exatamente quanto precisa vender no mês e no dia.
+            </p>
+        </article>
+
+        <article class="landing-value-card">
+            <div class="value-icon">📈</div>
+            <h3>Progresso visível</h3>
+            <p>
+                O painel mostra o avanço real, o ritmo atual e quanto ainda falta para bater o objetivo.
+            </p>
+        </article>
+
+        <article class="landing-value-card">
+            <div class="value-icon">✅</div>
+            <h3>Constância operacional</h3>
+            <p>
+                O checklist diário ajuda a manter disciplina, follow-up, propostas e revisão da meta.
+            </p>
+        </article>
+
+        <article class="landing-value-card">
+            <div class="value-icon">🧠</div>
+            <h3>Mais clareza na execução</h3>
+            <p>
+                Em vez de agir no improviso, o cliente passa a decidir com base no que realmente está acontecendo.
+            </p>
+        </article>
+
+        <article class="landing-value-card">
+            <div class="value-icon">📋</div>
+            <h3>Histórico organizado</h3>
+            <p>
+                Todos os registros ficam concentrados em um sistema simples e fácil de acompanhar.
+            </p>
+        </article>
+
+        <article class="landing-value-card">
+            <div class="value-icon">🔒</div>
+            <h3>Uso profissional</h3>
+            <p>
+                Cadastro, confirmação de e-mail, painel e controle de acesso tornam a experiência mais séria e confiável.
+            </p>
+        </article>
+    </div>
+</section>
+
+<section class="landing-steps-section">
+    <div class="section-head">
+        <span class="eyebrow">Como funciona</span>
+        <h2>Simples de começar, forte para usar</h2>
+    </div>
+
+    <div class="landing-steps-grid">
+        <article class="step-card">
+            <span class="step-number">01</span>
+            <h3>Crie sua conta</h3>
+            <p>
+                Faça seu cadastro e confirme seu e-mail para ativar seu acesso com segurança.
+            </p>
+        </article>
+
+        <article class="step-card">
+            <span class="step-number">02</span>
+            <h3>Defina sua meta</h3>
+            <p>
+                Informe seu objetivo mensal para o sistema calcular sua estrutura de desempenho.
+            </p>
+        </article>
+
+        <article class="step-card">
+            <span class="step-number">03</span>
+            <h3>Use o painel</h3>
+            <p>
+                Registre resultados, acompanhe sua evolução e mantenha constância na operação.
+            </p>
+        </article>
+    </div>
+</section>
+
+<section class="landing-bottom-cta">
+    <div class="landing-bottom-cta-content">
+        <span class="eyebrow">Pronto para começar?</span>
+        <h2>Entre agora no MetaSimples e organize sua evolução com mais profissionalismo.</h2>
+        <p>
+            Uma solução feita para transformar rotina em consistência e consistência em resultado.
+        </p>
+
+        <div class="landing-actions center">
+            <a href="{{ url_for('auth.register') }}" class="btn-primary landing-main-cta">
+                Manter minha vaga
+            </a>
+            <a href="{{ url_for('auth.register') }}" class="btn-secondary">
+                Criar conta
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="btn-ghost">
+                Entrar
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

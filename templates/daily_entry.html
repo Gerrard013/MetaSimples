@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Lançar resultado | MetaSimples{% endblock %}
+{% block content %}
+<section class="panel narrow">
+    <div class="section-heading">
+        <span class="eyebrow">Rotina diária</span>
+        <h1>Registrar desempenho do dia</h1>
+        <p>Salve suas vendas, atendimentos e fechamentos para manter o dashboard atualizado.</p>
+    </div>
+    <form method="POST" class="form-grid panel-form">
+        {{ form.hidden_tag() }}
+        <div class="field">
+            <label>{{ form.date.label }}</label>
+            {{ form.date(class_='input') }}
+        </div>
+        <div class="field">
+            <label>{{ form.sales_value.label }}</label>
+            {{ form.sales_value(class_='input', placeholder='Ex: 1200') }}
+        </div>
+        <div class="field two-col">
+            <div>
+                <label>{{ form.attendance_count.label }}</label>
+                {{ form.attendance_count(class_='input', placeholder='Ex: 12') }}
+            </div>
+            <div>
+                <label>{{ form.closed_deals.label }}</label>
+                {{ form.closed_deals(class_='input', placeholder='Ex: 3') }}
+            </div>
+        </div>
+        <div class="field">
+            <label>{{ form.notes.label }}</label>
+            {{ form.notes(class_='textarea', placeholder='Observações do dia, objeções, aprendizados...') }}
+        </div>
+        <button type="submit" class="btn-primary">{{ form.submit.label.text }}</button>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Configurações | MetaSimples{% endblock %}
+{% block content %}
+<section class="settings-layout">
+    <section class="panel narrow">
+        <div class="section-heading">
+            <span class="eyebrow">Ajustes</span>
+            <h1>Editar metas</h1>
+            <p>Atualize sua meta mensal, escolha se trabalha com comissão e ajuste seus dias úteis.</p>
+        </div>
+        <form method="POST" class="form-grid panel-form" id="goalForm">
+            {{ form.hidden_tag() }}
+            <div class="field">
+                <label>{{ form.target_income_month.label }}</label>
+                {{ form.target_income_month(class_='input money-input', placeholder='Ex: 3000 ou 3.000,50', inputmode='decimal') }}
+                {% for error in form.target_income_month.errors %}
+                    <small class="field-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            <div class="field toggle-field">
+                <label class="toggle-row">
+                    {{ form.use_commission(class_='toggle-input', id='use_commission') }}
+                    <span>Usar comissão nas metas</span>
+                </label>
+            </div>
+
+            <div class="field" id="commissionField">
+                <label>{{ form.commission_percent.label }}</label>
+                {{ form.commission_percent(class_='input', placeholder='Ex: 10', inputmode='decimal') }}
+                <small class="field-help">Desative acima para trabalhar sem comissão.</small>
+                {% for error in form.commission_percent.errors %}
+                    <small class="field-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            <div class="field">
+                <label>{{ form.working_days_month.label }}</label>
+                {{ form.working_days_month(class_='input', placeholder='Ex: 25', inputmode='numeric') }}
+                {% for error in form.working_days_month.errors %}
+                    <small class="field-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn-primary btn-save-main">{{ form.submit.label.text }}</button>
+        </form>
+    </section>
+
+    <aside class="panel support-panel">
+        <div class="section-heading support-heading">
+            <span class="eyebrow">Suporte</span>
+            <h1>Precisa de ajuda?</h1>
+            <p>Fale direto com o suporte da G Tech.</p>
+        </div>
+
+        <div class="support-card-list">
+            <div class="support-card-item">
+                <span class="support-card-label">WhatsApp</span>
+                <strong>(91) 99135-2594</strong>
+            </div>
+            <div class="support-card-item">
+                <span class="support-card-label">E-mail</span>
+                <strong>domgg787@gmail.com</strong>
+            </div>
+            <div class="support-card-item">
+                <span class="support-card-label">Atendimento</span>
+                <strong>Seg a Sáb • resposta rápida</strong>
+            </div>
+        </div>
+
+        <a href="https://wa.me/5591991352594" target="_blank" rel="noopener noreferrer" class="btn-secondary full">
+            Falar com suporte
+        </a>
+        <a href="mailto:domgg787@gmail.com" class="btn-secondary full">
+            Enviar e-mail
+        </a>
+    </aside>
+</section>
+{% endblock %}

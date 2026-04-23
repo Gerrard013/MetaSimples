@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard admin | MetaSimples{% endblock %}
+{% block content %}
+<section class="dashboard-header">
+    <span class="eyebrow">Administração</span>
+    <h1>Painel administrativo</h1>
+    <p>Controle leads, usuários, bloqueios, liberações e pagamentos em um só lugar.</p>
+</section>
+
+<section class="panel" style="margin-bottom: 24px;">
+    <form method="GET" action="{{ url_for('main.admin_dashboard') }}" class="form-grid">
+        <div class="field">
+            <label>Buscar por nome, e-mail ou WhatsApp</label>
+            <input type="text" name="q" class="input" placeholder="Ex.: Dani, gmail.com, 91999999999" value="{{ search }}">
+        </div>
+        <button type="submit" class="btn-primary">Buscar</button>
+    </form>
+</section>
+
+<section class="metrics-grid">
+    <article class="metric-card"><span>Total de leads</span><strong>{{ stats.total_leads }}</strong></article>
+    <article class="metric-card"><span>Total de usuários</span><strong>{{ stats.total_users }}</strong></article>
+    <article class="metric-card"><span>Usuários bloqueados</span><strong>{{ stats.blocked_users }}</strong></article>
+    <article class="metric-card"><span>Pagamentos pendentes</span><strong>{{ stats.pending_payments }}</strong></article>
+</section>
+
+<section class="panel table-panel">
+    <h2>Usuários do sistema</h2>
+
+    <div class="table-wrap admin-desktop-table">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>WhatsApp</th>
+                    <th>Status</th>
+                    <th>Teste expira</th>
+                    <th>Pago até</th>
+                    <th>Bloquear / desbloquear</th>
+                    <th>Liberar acesso</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.whatsapp or '-' }}</td>
+                    <td>
+                        {% if user.is_admin %}
+                            Admin
+                        {% elif user.is_blocked %}
+                            Bloqueado
+                        {% elif user.paid_until and user.paid_until > now %}
+                            Pago / ativo
+                        {% elif user.email_verified %}
+                            Em teste / ativo
+                        {% else %}
+                            Pendente de confirmação
+                        {% endif %}
+                    </td>
+                    <td>{{ user.trial_expires_at.strftime('%d/%m/%Y %H:%M') if user.trial_expires_at else '-' }}</td>
+                    <td>{{ user.paid_until.strftime('%d/%m/%Y %H:%M') if user.paid_until else '-' }}</td>
+                    <td>
+                        {% if not user.is_admin %}
+                        <form method="POST" action="{{ url_for('main.toggle_user_block', user_id=user.id) }}" class="inline-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            {% if user.is_blocked %}
+                                <input type="hidden" name="action" value="unblock">
+                                <input type="text" name="reason" class="input" placeholder="Motivo do desbloqueio">
+                                <button class="btn-secondary" type="submit">Desbloquear</button>
+                            {% else %}
+                                <input type="hidden" name="action" value="block">
+                                <input type="text" name="reason" class="input" placeholder="Ex.: não pagou">
+                                <button class="btn-primary" type="submit">Bloquear</button>
+                            {% endif %}
+                        </form>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not user.is_admin %}
+                        <form method="POST" action="{{ url_for('main.grant_user_access', user_id=user.id) }}" class="inline-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="number" name="paid_days" class="input" min="1" max="3650" value="30" placeholder="Dias">
+                            <input type="text" name="reason" class="input" placeholder="Ex.: pagamento confirmado">
+                            <button class="btn-secondary" type="submit">Liberar</button>
+                        </form>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8">Nenhum usuário encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="admin-mobile-cards">
+        {% for user in users %}
+        <article class="admin-user-card">
+            <div class="admin-user-card-head">
+                <h3>{{ user.name }}</h3>
+                <span class="status-badge">
+                    {% if user.is_admin %}
+                        Admin
+                    {% elif user.is_blocked %}
+                        Bloqueado
+                    {% elif user.paid_until and user.paid_until > now %}
+                        Pago / ativo
+                    {% elif user.email_verified %}
+                        Em teste / ativo
+                    {% else %}
+                        Pendente
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="admin-user-meta">
+                <p><strong>E-mail:</strong> {{ user.email }}</p>
+                <p><strong>WhatsApp:</strong> {{ user.whatsapp or '-' }}</p>
+                <p><strong>Teste expira:</strong> {{ user.trial_expires_at.strftime('%d/%m/%Y %H:%M') if user.trial_expires_at else '-' }}</p>
+                <p><strong>Pago até:</strong> {{ user.paid_until.strftime('%d/%m/%Y %H:%M') if user.paid_until else '-' }}</p>
+            </div>
+
+            {% if not user.is_admin %}
+            <form method="POST" action="{{ url_for('main.toggle_user_block', user_id=user.id) }}" class="admin-mobile-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% if user.is_blocked %}
+                    <input type="hidden" name="action" value="unblock">
+                    <input type="text" name="reason" class="input" placeholder="Motivo do desbloqueio">
+                    <button class="btn-secondary full" type="submit">Desbloquear usuário</button>
+                {% else %}
+                    <input type="hidden" name="action" value="block">
+                    <input type="text" name="reason" class="input" placeholder="Ex.: não pagou">
+                    <button class="btn-primary full" type="submit">Bloquear usuário</button>
+                {% endif %}
+            </form>
+
+            <form method="POST" action="{{ url_for('main.grant_user_access', user_id=user.id) }}" class="admin-mobile-form" style="margin-top: 12px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="number" name="paid_days" class="input" min="1" max="3650" value="30" placeholder="Dias">
+                <input type="text" name="reason" class="input" placeholder="Ex.: pagamento confirmado">
+                <button class="btn-secondary full" type="submit">Liberar acesso</button>
+            </form>
+            {% endif %}
+        </article>
+        {% else %}
+        <div class="empty-state-card">
+            <strong>Nenhum usuário encontrado.</strong>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="panel table-panel">
+    <h2>Leads capturados</h2>
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>WhatsApp</th>
+                    <th>Origem</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lead in leads %}
+                <tr>
+                    <td>{{ lead.name }}</td>
+                    <td>{{ lead.email }}</td>
+                    <td>{{ lead.whatsapp }}</td>
+                    <td>{{ lead.source }}</td>
+                    <td>{{ lead.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5">Nenhum lead cadastrado ainda.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="panel table-panel">
+    <h2>Pagamentos recentes</h2>
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Usuário</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Vencimento</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr>
+                    <td>#{{ payment.id }}</td>
+                    <td>{{ payment.user.name }}</td>
+                    <td>{{ format_brl(payment.amount) }}</td>
+                    <td>{{ payment.status }}</td>
+                    <td>{{ payment.due_date.strftime('%d/%m/%Y') if payment.due_date else '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5">Nenhum pagamento cadastrado ainda.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

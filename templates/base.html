@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MetaSimples{% endblock %}</title>
+    <meta name="description" content="MetaSimples - sistema de metas e performance comercial.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+    <div class="app-shell">
+        <header class="site-header">
+            <div class="header-left">
+                <a href="{% if current_user.is_authenticated %}{{ url_for('main.dashboard') }}{% else %}{{ url_for('main.index') }}{% endif %}" class="brand-wrap">
+                    <div class="brand-logo-box">
+                        <img src="{{ url_for('static', filename='img/logo.jpeg') }}" alt="Logo MetaSimples" class="brand-logo" loading="lazy">
+                    </div>
+                    <div class="brand-meta">
+                        <span class="brand-title">MetaSimples</span>
+                        <span class="brand-subtitle">by G Tech Innovation &amp; Solutions</span>
+                    </div>
+                </a>
+
+                {% if current_user.is_authenticated %}
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <span style="display:inline-flex;align-items:center;padding:8px 14px;border-radius:999px;background:rgba(18,184,245,0.12);border:1px solid rgba(18,184,245,0.25);font-size:13px;font-weight:700;color:#123355;">
+                            Bem-vindo, {{ current_user.name }}
+                        </span>
+                        <a href="{{ url_for('auth.logout') }}" class="header-logout-btn">Sair</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <nav class="site-nav" aria-label="Navegação principal">
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('main.dashboard') }}" class="{% if request.endpoint == 'main.dashboard' %}is-active{% endif %}">Início</a>
+                    <a href="{{ url_for('main.daily_entry') }}" class="{% if request.endpoint == 'main.daily_entry' %}is-active{% endif %}">Lançar dia</a>
+                    <a href="{{ url_for('main.checklist') }}" class="{% if request.endpoint == 'main.checklist' %}is-active{% endif %}">Checklist</a>
+                    <a href="{{ url_for('main.history') }}" class="{% if request.endpoint == 'main.history' %}is-active{% endif %}">Histórico</a>
+                    <a href="{{ url_for('main.settings') }}" class="{% if request.endpoint in ['main.settings', 'main.onboarding'] %}is-active{% endif %}">Configurações</a>
+                {% else %}
+                    <a href="{{ url_for('main.index') }}" class="{% if request.endpoint == 'main.index' %}is-active{% endif %}">Início</a>
+                    <a href="{{ url_for('auth.login') }}" class="{% if request.endpoint == 'auth.login' %}is-active{% endif %}">Entrar</a>
+                    <a href="{{ url_for('auth.register') }}" class="nav-cta">Começar</a>
+                {% endif %}
+            </nav>
+        </header>
+
+        <main class="page-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-stack">
+                        {% for category, message in messages %}
+                            <div class="flash flash-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    {% if current_user.is_authenticated %}
+    <nav class="mobile-bottom-nav" aria-label="Navegação principal mobile">
+        <a href="{{ url_for('main.dashboard') }}" class="mobile-nav-link {% if request.endpoint == 'main.dashboard' %}is-active{% endif %}">
+            <span class="mobile-nav-icon">🏠</span>
+            <span class="mobile-nav-text">Início</span>
+        </a>
+        <a href="{{ url_for('main.daily_entry') }}" class="mobile-nav-link {% if request.endpoint == 'main.daily_entry' %}is-active{% endif %}">
+            <span class="mobile-nav-icon">➕</span>
+            <span class="mobile-nav-text">Lançar</span>
+        </a>
+        <a href="{{ url_for('main.checklist') }}" class="mobile-nav-link {% if request.endpoint == 'main.checklist' %}is-active{% endif %}">
+            <span class="mobile-nav-icon">✅</span>
+            <span class="mobile-nav-text">Checklist</span>
+        </a>
+        <a href="{{ url_for('main.history') }}" class="mobile-nav-link {% if request.endpoint == 'main.history' %}is-active{% endif %}">
+            <span class="mobile-nav-icon">📄</span>
+            <span class="mobile-nav-text">Histórico</span>
+        </a>
+        <a href="{{ url_for('main.settings') }}" class="mobile-nav-link {% if request.endpoint in ['main.settings', 'main.onboarding'] %}is-active{% endif %}">
+            <span class="mobile-nav-icon">⚙️</span>
+            <span class="mobile-nav-text">Ajustes</span>
+        </a>
+    </nav>
+    {% endif %}
+
+    <script defer src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

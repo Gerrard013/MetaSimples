@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Definir meta inicial | MetaSimples{% endblock %}
+{% block content %}
+<section class="auth-section">
+    <div class="auth-card auth-card-wide">
+        <span class="eyebrow">Primeiro passo</span>
+        <h1>Defina sua meta para liberar o painel</h1>
+        <p>
+            Antes de usar o dashboard, você precisa cadastrar sua meta inicial.
+            Isso permite que o sistema calcule progresso, ritmo do mês e indicadores diários corretamente.
+        </p>
+
+        <div class="panel" style="margin: 18px 0 22px 0;">
+            <strong>Importante:</strong>
+            <p style="margin-top: 8px;">
+                Sem meta cadastrada, o sistema não consegue montar seu painel de desempenho.
+                Preencha os dados abaixo e clique em salvar.
+            </p>
+        </div>
+
+        <form method="POST" class="form-grid">
+            {{ form.hidden_tag() }}
+
+            <div class="field">
+                <label>{{ form.target_sales_month.label }}</label>
+                {{ form.target_sales_month(class_='input', placeholder='Ex.: 15000') }}
+            </div>
+
+            <div class="field">
+                <label>{{ form.target_income_month.label }}</label>
+                {{ form.target_income_month(class_='input', placeholder='Ex.: 3000') }}
+            </div>
+
+            <div class="field">
+                <label>{{ form.target_sales_day.label }}</label>
+                {{ form.target_sales_day(class_='input', placeholder='Ex.: 500') }}
+            </div>
+
+            <div class="field">
+                <label class="checkbox-row">
+                    {{ form.use_commission() }}
+                    <span>Usar comissão no cálculo</span>
+                </label>
+            </div>
+
+            <div class="field" id="commissionField">
+                <label>{{ form.commission_percent.label }}</label>
+                {{ form.commission_percent(class_='input', placeholder='Ex.: 5') }}
+                <small class="field-help">Preencha apenas se você usar comissão percentual.</small>
+            </div>
+
+            <button type="submit" class="btn-primary full">
+                Salvar meta e liberar painel
+            </button>
+        </form>
+    </div>
+</section>
+{% endblock %}
