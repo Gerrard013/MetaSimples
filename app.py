@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from flask import Flask, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -19,20 +20,28 @@ def ensure_admin_user(app: Flask) -> None:
             app.logger.warning('ADMIN_EMAIL ou ADMIN_PASSWORD não configurados.')
             return
 
+        app.logger.info('Verificando administrador padrão...')
+        app.logger.info('ADMIN_EMAIL configurado: %s', admin_email)
+
         admin_user = User.query.filter_by(is_admin=True).first()
         admin_by_email = User.query.filter_by(email=admin_email).first()
 
         if admin_user and admin_by_email and admin_user.id != admin_by_email.id:
             app.logger.warning(
-                'Conflito de admins detectado. Mantendo o admin principal e sincronizando pelo email configurado.'
+                'Conflito de admins detectado. O admin principal será mantido e o email configurado será sincronizado.'
             )
 
         if admin_user:
             if admin_user.email != admin_email:
                 existing_with_target_email = User.query.filter_by(email=admin_email).first()
+
                 if existing_with_target_email and existing_with_target_email.id != admin_user.id:
                     existing_with_target_email.is_admin = False
                     db.session.add(existing_with_target_email)
+                    app.logger.info(
+                        'Removendo privilégio admin de usuário antigo com email %s',
+                        existing_with_target_email.email
+                    )
 
                 admin_user.email = admin_email
 
@@ -42,13 +51,16 @@ def ensure_admin_user(app: Flask) -> None:
             admin_user.is_blocked = False
             admin_user.blocked_reason = None
             admin_user.email_verified = True
+
             if not admin_user.email_verified_at:
-                from datetime import datetime
                 admin_user.email_verified_at = datetime.utcnow()
 
             admin_user.set_password(admin_password)
+
             db.session.add(admin_user)
             db.session.commit()
+
+            app.logger.info('Administrador sincronizado com sucesso: %s', admin_user.email)
             return
 
         if admin_by_email:
@@ -58,16 +70,17 @@ def ensure_admin_user(app: Flask) -> None:
             admin_by_email.is_blocked = False
             admin_by_email.blocked_reason = None
             admin_by_email.email_verified = True
+
             if not admin_by_email.email_verified_at:
-                from datetime import datetime
                 admin_by_email.email_verified_at = datetime.utcnow()
 
             admin_by_email.set_password(admin_password)
+
             db.session.add(admin_by_email)
             db.session.commit()
-            return
 
-        from datetime import datetime
+            app.logger.info('Usuário promovido a administrador com sucesso: %s', admin_by_email.email)
+            return
 
         admin = User(
             name='Administrador MetaSimples',
@@ -80,13 +93,17 @@ def ensure_admin_user(app: Flask) -> None:
             email_verified_at=datetime.utcnow(),
         )
         admin.set_password(admin_password)
+
         db.session.add(admin)
         db.session.commit()
+
+        app.logger.info('Administrador criado com sucesso: %s', admin.email)
 
 
 def create_app() -> Flask:
     app = Flask(__name__)
     app.config.from_object(Config)
+
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
     db.init_app(app)
@@ -97,10 +114,10 @@ def create_app() -> Flask:
     with app.app_context():
         import models  # noqa: F401
         db.create_all()
+        ensure_admin_user(app)
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
-    ensure_admin_user(app)
 
     @app.errorhandler(404)
     def page_not_found(error):
