@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-ENV_PATH = BASE_DIR / '.env'
+ENV_PATH = BASE_DIR / ".env"
 
 load_dotenv(ENV_PATH)
 
@@ -13,32 +13,54 @@ load_dotenv(ENV_PATH)
 def _to_bool(value, default=False):
     if value is None:
         return default
-    return str(value).strip().lower() in ('1', 'true', 'yes', 'on')
+
+    return str(value).strip().lower() in ("1", "true", "yes", "on")
+
+
+def _fix_database_url(database_url: str) -> str:
+    if not database_url:
+        return "sqlite:///metasimples.db"
+
+    database_url = database_url.strip()
+
+    if database_url.startswith("postgresql://"):
+        return database_url.replace("postgresql://", "postgresql+pg8000://", 1)
+
+    if database_url.startswith("postgres://"):
+        return database_url.replace("postgres://", "postgresql+pg8000://", 1)
+
+    return database_url
 
 
 class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY', 'change-me')
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///metasimples.db')
+    SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
+
+    SQLALCHEMY_DATABASE_URI = _fix_database_url(
+        os.getenv("DATABASE_URL", "sqlite:///metasimples.db")
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    APP_NAME = os.getenv('APP_NAME', 'MetaSimples')
-    APP_BASE_URL = os.getenv('APP_BASE_URL', 'http://127.0.0.1:5000')
-    SUPPORT_WHATSAPP = os.getenv('SUPPORT_WHATSAPP', '')
-    DEFAULT_TRIAL_DAYS = int(os.getenv('DEFAULT_TRIAL_DAYS', '7'))
-    PAYMENT_URL = os.getenv('PAYMENT_URL', '')
-    FLASK_ENV = os.getenv('FLASK_ENV', 'development')
+    APP_NAME = os.getenv("APP_NAME", "MetaSimples")
+    APP_BASE_URL = os.getenv("APP_BASE_URL", "http://127.0.0.1:5000").rstrip("/")
+    SUPPORT_WHATSAPP = os.getenv("SUPPORT_WHATSAPP", "").strip()
+    DEFAULT_TRIAL_DAYS = int(os.getenv("DEFAULT_TRIAL_DAYS", "7"))
+    PAYMENT_URL = os.getenv("PAYMENT_URL", "").strip()
+    FLASK_ENV = os.getenv("FLASK_ENV", "development")
 
-    ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', '').strip().lower()
-    ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '')
+    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "").strip().lower()
+    ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 
-    MAIL_ENABLED = _to_bool(os.getenv('MAIL_ENABLED', 'false'))
-    MAIL_HOST = os.getenv('MAIL_HOST', '').strip()
-    MAIL_PORT = int(os.getenv('MAIL_PORT', '587'))
-    MAIL_USERNAME = os.getenv('MAIL_USERNAME', '').strip()
-    MAIL_PASSWORD = os.getenv('MAIL_PASSWORD', '').strip().replace(' ', '')
-    MAIL_USE_TLS = _to_bool(os.getenv('MAIL_USE_TLS', 'true'))
-    MAIL_USE_SSL = _to_bool(os.getenv('MAIL_USE_SSL', 'false'))
-    MAIL_FROM_NAME = os.getenv('MAIL_FROM_NAME', 'MetaSimples').strip()
-    MAIL_FROM_EMAIL = os.getenv('MAIL_FROM_EMAIL', '').strip()
+    MAIL_ENABLED = _to_bool(os.getenv("MAIL_ENABLED", "false"))
+    MAIL_HOST = os.getenv("MAIL_HOST", "").strip()
+    MAIL_PORT = int(os.getenv("MAIL_PORT", "587"))
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME", "").strip()
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", "").strip().replace(" ", "")
+    MAIL_USE_TLS = _to_bool(os.getenv("MAIL_USE_TLS", "true"))
+    MAIL_USE_SSL = _to_bool(os.getenv("MAIL_USE_SSL", "false"))
+    MAIL_FROM_NAME = os.getenv("MAIL_FROM_NAME", "MetaSimples").strip()
+    MAIL_FROM_EMAIL = (
+        os.getenv("MAIL_FROM_EMAIL", "").strip()
+        or os.getenv("MAIL_USERNAME", "").strip()
+    )
 
     WTF_CSRF_TIME_LIMIT = None
