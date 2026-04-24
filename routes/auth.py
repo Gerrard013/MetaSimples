@@ -8,11 +8,7 @@ from forms import LoginForm, RegisterForm
 from models.goal import Goal
 from models.lead import Lead
 from models.user import User
-from services.email_service import (
-    confirm_email_verification_token,
-    send_verification_email,
-    send_welcome_email,
-)
+from services.email_service import confirm_email_token, send_confirmation_email
 from utils.validators import (
     format_whatsapp_br,
     is_valid_email,
@@ -21,13 +17,16 @@ from utils.validators import (
     normalize_whatsapp_br,
 )
 
+
 auth_bp = Blueprint('auth', __name__)
 
 
 def _get_post_login_redirect(user_id: int):
     goal = Goal.query.filter_by(user_id=user_id).order_by(Goal.updated_at.desc()).first()
+
     if goal:
         return url_for('main.dashboard')
+
     return url_for('main.onboarding')
 
 
@@ -41,34 +40,62 @@ def register():
     if form.validate_on_submit():
         email = normalize_email(form.email.data)
         whatsapp = normalize_whatsapp_br(form.whatsapp.data)
-        trial_days = current_app.config.get('DEFAULT_TRIAL_DAYS', 7)
+        trial_days = int(current_app.config.get('DEFAULT_TRIAL_DAYS', 7))
 
-        if not is_valid_email(email, check_deliverability=True):
-            flash('Informe um e-mail válido e com domínio existente.', 'error')
+        if not is_valid_email(email, check_deliverability=False):
+            flash('Informe um e-mail válido.', 'error')
             return render_template('register.html', form=form)
 
         if not is_valid_whatsapp_br(whatsapp):
             flash('Informe um WhatsApp válido no padrão do Brasil com DDD e 9 dígitos.', 'error')
             return render_template('register.html', form=form)
 
-        if User.query.filter_by(email=email).first():
-            flash('Este e-mail já está cadastrado.', 'error')
-            return render_template('register.html', form=form)
+        existing_user = User.query.filter_by(email=email).first()
 
-        if User.query.filter_by(whatsapp=whatsapp).first():
+        if existing_user:
+            if not existing_user.email_verified:
+                sent, message = send_confirmation_email(existing_user)
+                existing_user.verification_sent_at = datetime.utcnow()
+                db.session.commit()
+
+                if sent:
+                    flash('Este e-mail já estava cadastrado. Reenviamos a confirmação para seu e-mail.', 'info')
+                else:
+                    current_app.logger.warning(
+                        'Falha ao reenviar confirmação para %s: %s',
+                        existing_user.email,
+                        message,
+                    )
+                    flash('Este e-mail já está cadastrado, mas não conseguimos reenviar a confirmação. Verifique o SMTP no Railway.', 'warning')
+
+                return redirect(url_for('auth.login'))
+
+            flash('Este e-mail já está cadastrado. Faça login.', 'error')
+            return redirect(url_for('auth.login'))
+
+        existing_whatsapp = User.query.filter_by(whatsapp=whatsapp).first()
+
+        if existing_whatsapp:
             flash('Este WhatsApp já está cadastrado.', 'error')
             return render_template('register.html', form=form)
+
+        now = datetime.utcnow()
 
         user = User(
             name=form.name.data.strip(),
             email=email,
             whatsapp=whatsapp,
+            is_admin=False,
+            is_active_account=True,
+            is_blocked=False,
             email_verified=False,
-            verification_sent_at=datetime.utcnow(),
-            trial_started_at=datetime.utcnow(),
-            trial_expires_at=datetime.utcnow() + timedelta(days=trial_days),
+            email_verified_at=None,
+            verification_sent_at=now,
+            trial_started_at=now,
+            trial_expires_at=now + timedelta(days=trial_days),
         )
         user.set_password(form.password.data)
+
         db.session.add(user)
 
         existing_lead = Lead.query.filter(
@@ -87,87 +114,86 @@ def register():
 
         db.session.commit()
 
-        sent, message = send_verification_email(user)
-        if not sent:
+        sent, message = send_confirmation_email(user)
+
+        if sent:
+            flash('Conta criada. Enviamos um link de confirmação para o seu e-mail.', 'success')
+        else:
             current_app.logger.warning(
-                'Falha ao enviar e-mail de verificação para %s: %s',
+                'Falha ao enviar confirmação para %s: %s',
                 user.email,
                 message,
             )
-            flash(f'Conta criada, mas houve falha no envio do e-mail: {message}', 'error')
-        else:
-            flash('Conta criada. Enviamos um link de confirmação para o seu e-mail.', 'success')
+            flash('Conta criada, mas o e-mail de confirmação não foi enviado. Verifique as variáveis SMTP no Railway.', 'warning')
 
         return redirect(url_for('auth.login'))
 
     return render_template('register.html', form=form)
 
 
-@auth_bp.route('/verify-email/<token>')
-def verify_email(token):
-    email = confirm_email_verification_token(token)
+@auth_bp.route('/confirmar-email/<token>')
+def confirm_email(token):
+    email = confirm_email_token(token)
 
     if not email:
-        flash('Link de confirmação inválido ou expirado.', 'error')
+        flash('Link de confirmação inválido ou expirado. Solicite um novo link.', 'error')
         return redirect(url_for('auth.login'))
 
-    user = User.query.filter_by(email=normalize_email(email)).first()
+    email = normalize_email(email)
+    user = User.query.filter_by(email=email).first()
 
     if not user:
-        flash('Usuário não encontrado para este link de confirmação.', 'error')
+        flash('Usuário não encontrado para este link.', 'error')
         return redirect(url_for('auth.register'))
 
     if user.email_verified:
-        flash('Seu e-mail já foi confirmado. Agora é só entrar.', 'info')
+        flash('Seu e-mail já estava confirmado. Faça login.', 'info')
         return redirect(url_for('auth.login'))
 
-    user.mark_email_as_verified()
-    db.session.commit()
+    user.email_verified = True
+    user.email_verified_at = datetime.utcnow()
+    user.is_active_account = True
+    user.is_blocked = False
+    user.blocked_reason = None
 
-    sent, message = send_welcome_email(user)
-    if not sent:
-        current_app.logger.warning(
-            'Falha ao enviar e-mail de boas-vindas pós-confirmação para %s: %s',
-            user.email,
-            message,
-        )
+    db.session.commit()
 
     flash('E-mail confirmado com sucesso. Agora você já pode entrar.', 'success')
     return redirect(url_for('auth.login'))
 
 
-@auth_bp.route('/resend-verification', methods=['POST'])
-def resend_verification():
+@auth_bp.route('/reenviar-confirmacao', methods=['POST'])
+def resend_confirmation():
     email = normalize_email(request.form.get('email', ''))
 
     if not email:
-        flash('Informe um e-mail válido para reenviar a confirmação.', 'error')
+        flash('Informe seu e-mail para reenviar a confirmação.', 'error')
         return redirect(url_for('auth.login'))
 
     user = User.query.filter_by(email=email).first()
 
     if not user:
-        flash('Não encontramos uma conta com esse e-mail.', 'error')
+        flash('Não encontramos uma conta com este e-mail.', 'error')
         return redirect(url_for('auth.login'))
 
     if user.email_verified:
-        flash('Este e-mail já foi confirmado. Faça login normalmente.', 'info')
+        flash('Este e-mail já está confirmado. Faça login.', 'info')
         return redirect(url_for('auth.login'))
 
+    sent, message = send_confirmation_email(user)
     user.verification_sent_at = datetime.utcnow()
     db.session.commit()
 
-    sent, message = send_verification_email(user)
-    if not sent:
+    if sent:
+        flash('Enviamos um novo link de confirmação para seu e-mail.', 'success')
+    else:
         current_app.logger.warning(
-            'Falha ao reenviar e-mail de verificação para %s: %s',
+            'Falha ao reenviar confirmação para %s: %s',
             user.email,
             message,
         )
-        flash(f'Erro SMTP real: {message}', 'error')
-        return redirect(url_for('auth.login'))
+        flash('Não conseguimos enviar o e-mail. Verifique as variáveis SMTP no Railway.', 'error')
 
-    flash('Novo link de confirmação enviado para seu e-mail.', 'success')
     return redirect(url_for('auth.login'))
 
 
@@ -186,9 +212,9 @@ def login():
             flash('E-mail ou senha inválidos.', 'error')
             return render_template('login.html', form=form)
 
-        if not user.email_verified and not user.is_admin:
-            flash('Confirme seu e-mail antes de entrar.', 'error')
-            return render_template('login.html', form=form, pending_verification_email=user.email)
+        if not user.is_admin and not user.email_verified:
+            flash('Você precisa confirmar seu e-mail antes de entrar.', 'warning')
+            return render_template('login.html', form=form, pending_email=email)
 
         if user.auto_block_if_needed():
             db.session.commit()
@@ -199,9 +225,6 @@ def login():
 
         login_user(user, remember=True)
         flash('Login realizado com sucesso.', 'success')
-
-        if user.is_admin and request.args.get('next'):
-            return redirect(request.args.get('next'))
 
         return redirect(_get_post_login_redirect(user.id))
 
@@ -225,14 +248,22 @@ def admin_login():
 
     if form.validate_on_submit():
         email = normalize_email(form.email.data)
-        user = User.query.filter_by(email=email, is_admin=True).first()
+        user = User.query.filter_by(email=email).first()
 
-        if not user or not user.check_password(form.password.data):
+        if not user or not user.is_admin or not user.check_password(form.password.data):
             flash('Credenciais administrativas inválidas.', 'error')
             return render_template('admin/login.html', form=form)
 
+        user.email_verified = True
+        user.email_verified_at = user.email_verified_at or datetime.utcnow()
+        user.is_active_account = True
+        user.is_blocked = False
+        user.blocked_reason = None
+        db.session.commit()
+
         login_user(user, remember=True)
         flash('Login administrativo realizado com sucesso.', 'success')
+
         return redirect(url_for('main.admin_dashboard'))
 
     return render_template('admin/login.html', form=form)
@@ -245,7 +276,7 @@ def validate_email_api():
     exists_in_leads = bool(Lead.query.filter_by(email=email).first()) if email else False
 
     return {
-        'valid': is_valid_email(email, check_deliverability=True),
+        'valid': is_valid_email(email, check_deliverability=False),
         'exists': exists_in_users or exists_in_leads,
     }
 

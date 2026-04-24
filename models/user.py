@@ -10,6 +10,7 @@ class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
+
     name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(160), unique=True, nullable=False, index=True)
     whatsapp = db.Column(db.String(20), unique=True, nullable=True, index=True)
@@ -31,6 +32,7 @@ class User(UserMixin, db.Model):
         default=lambda: datetime.utcnow() + timedelta(days=7),
         index=True,
     )
+
     paid_until = db.Column(db.DateTime, nullable=True, index=True)
     access_blocked_at = db.Column(db.DateTime, nullable=True)
 
@@ -42,34 +44,59 @@ class User(UserMixin, db.Model):
         nullable=False,
     )
 
-    goals = db.relationship('Goal', backref='user', lazy=True, cascade='all, delete-orphan')
-    daily_results = db.relationship('DailyResult', backref='user', lazy=True, cascade='all, delete-orphan')
-    checklist_entries = db.relationship('ChecklistEntry', backref='user', lazy=True, cascade='all, delete-orphan')
-    payments = db.relationship('Payment', backref='user', lazy=True, cascade='all, delete-orphan')
+    goals = db.relationship(
+        'Goal',
+        backref='user',
+        lazy=True,
+        cascade='all, delete-orphan',
+    )
+
+    daily_results = db.relationship(
+        'DailyResult',
+        backref='user',
+        lazy=True,
+        cascade='all, delete-orphan',
+    )
+
+    checklist_entries = db.relationship(
+        'ChecklistEntry',
+        backref='user',
+        lazy=True,
+        cascade='all, delete-orphan',
+    )
+
+    payments = db.relationship(
+        'Payment',
+        backref='user',
+        lazy=True,
+        cascade='all, delete-orphan',
+    )
 
     def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password: str) -> bool:
-        return check_password_hash(self.password_hash, password)
+        if not self.password_hash:
+            return False
 
-    def mark_email_as_verified(self) -> None:
-        self.email_verified = True
-        self.email_verified_at = datetime.utcnow()
+        return check_password_hash(self.password_hash, password)
 
     def can_access_system(self, now=None) -> bool:
         now = now or datetime.utcnow()
 
-        if not self.is_active_account or self.is_blocked:
+        if self.is_admin:
+            return True
+
+        if not self.email_verified:
             return False
 
-        if not self.email_verified and not self.is_admin:
+        if not self.is_active_account or self.is_blocked:
             return False
 
         if self.paid_until and self.paid_until >= now:
             return True
 
-        return bool(self.trial_expires_at and self.trial_expires_at >= now)
+        return self.trial_expires_at and self.trial_expires_at >= now
 
     def auto_block_if_needed(self, now=None) -> bool:
         now = now or datetime.utcnow()
@@ -91,7 +118,26 @@ class User(UserMixin, db.Model):
 
         return True
 
+    @property
+    def access_status(self) -> str:
+        if self.is_admin:
+            return 'admin'
+
+        if not self.email_verified:
+            return 'aguardando confirmação'
+
+        if self.is_blocked:
+            return 'bloqueado'
+
+        if self.can_access_system():
+            return 'ativo'
+
+        return 'expirado'
+
 
 @login_manager.user_loader
 def load_user(user_id: str):
-    return db.session.get(User, int(user_id))
+    try:
+        return db.session.get(User, int(user_id))
+    except Exception:
+        return None

@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
+
 {% block title %}Entrar | MetaSimples{% endblock %}
+
 {% block content %}
 <section class="auth-section">
     <div class="auth-card">
@@ -8,32 +10,36 @@
 
         <form method="POST" class="form-grid">
             {{ form.hidden_tag() }}
+
             <div class="field">
                 <label>{{ form.email.label }}</label>
                 {{ form.email(class_='input', placeholder='voce@email.com') }}
             </div>
+
             <div class="field">
                 <label>{{ form.password.label }}</label>
                 {{ form.password(class_='input', placeholder='Sua senha') }}
             </div>
-            <button type="submit" class="btn-primary full">{{ form.submit.label.text }}</button>
+
+            <button type="submit" class="btn-primary full">
+                {{ form.submit.label.text }}
+            </button>
         </form>
 
-        {% if pending_verification_email %}
-        <div class="panel" style="margin-top: 16px;">
-            <strong>Seu e-mail ainda não foi confirmado.</strong>
-            <p style="margin-top: 8px;">Clique abaixo para reenviar o link de ativação.</p>
-            <form method="POST" action="{{ url_for('auth.resend_verification') }}">
+        {% if pending_email %}
+            <form method="POST" action="{{ url_for('auth.resend_confirmation') }}" style="margin-top: 16px;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="email" value="{{ pending_verification_email }}">
-                <button type="submit" class="btn-secondary full" style="margin-top: 10px;">
-                    Reenviar confirmação
+                <input type="hidden" name="email" value="{{ pending_email }}">
+                <button type="submit" class="btn-secondary full">
+                    Reenviar confirmação de e-mail
                 </button>
             </form>
-        </div>
         {% endif %}
 
-        <p class="auth-footer">Ainda não tem conta? <a href="{{ url_for('auth.register') }}">Cadastre-se</a></p>
+        <p class="auth-footer">
+            Ainda não tem conta?
+            <a href="{{ url_for('auth.register') }}">Cadastre-se</a>
+        </p>
     </div>
 </section>
 {% endblock %}
