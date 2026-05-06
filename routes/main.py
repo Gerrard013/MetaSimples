@@ -5,7 +5,7 @@ from functools import wraps
 from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, logout_user
 
-from database.db import db
+from database.db import csrf, db
 from forms import AdminAccessForm, ChecklistForm, DailyResultForm, FinanceTransactionForm, GoalForm
 from models.checklist import ChecklistEntry
 from models.daily_result import DailyResult
@@ -940,6 +940,7 @@ def finance_send_summary():
 
 
 @main_bp.route('/internal/rpa/send-finance-summaries', methods=['POST'])
+@csrf.exempt
 def rpa_send_finance_summaries():
     secret = current_app.config.get('RPA_SECRET', '').strip()
     received_secret = request.headers.get('X-RPA-SECRET', '').strip()
