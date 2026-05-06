@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}G Tech | Controle financeiro e metas sem complicação{% endblock %}
+
+{% block content %}
+<section class="gt-hero client-hero">
+    <div class="gt-hero-bg"></div>
+    <div class="gt-hero-grid">
+        <div class="gt-hero-copy">
+            <span class="gt-pill">G Tech Innovation &amp; Solutions</span>
+            <h1>Tenha clareza do seu dinheiro e das suas metas em um painel simples.</h1>
+            <p>
+                Escolha o produto certo para o seu momento. O Controle G Tech ajuda você a organizar entradas,
+                saídas, categorias e saldo. O MetaSimples ajuda vendedores e autônomos a acompanhar meta, rotina e performance.
+            </p>
+            <div class="gt-hero-actions">
+                <a href="#planos" class="btn-primary">Ver planos</a>
+                <a href="{{ url_for('auth.login') }}" class="btn-secondary">Já sou cliente</a>
+            </div>
+            <div class="gt-proof-row">
+                <span>Pix e cartão pelo Mercado Pago</span>
+                <span>Painel mobile</span>
+                <span>IA/RPA sem OCR nesta fase</span>
+            </div>
+        </div>
+        <div class="gt-device-card client-device">
+            <div class="gt-device-top"><span>Controle G Tech</span><strong>Resumo inteligente</strong></div>
+            <div class="gt-balance-card"><span>Saldo do mês</span><strong>R$ 3.842,90</strong><small>Veja entradas, saídas, categorias e alertas em linguagem simples.</small></div>
+            <div class="gt-mini-grid"><div><span>Entrou</span><strong>R$ 6.200</strong></div><div><span>Saiu</span><strong>R$ 2.357</strong></div></div>
+            <div class="gt-client-note">Seu resumo pode ser enviado por e-mail pela G Tech para criar hábito e acompanhar evolução.</div>
+        </div>
+    </div>
+</section>
+
+<section class="gt-section" id="planos">
+    <div class="gt-section-head">
+        <span class="gt-pill">Planos de lançamento</span>
+        <h2>Preços coerentes: mensal cheio, desconto para quem paga antecipado.</h2>
+        <p>O valor abaixo já considera taxa configurada do Mercado Pago para o cliente pagar via checkout. Ajuste a taxa nas variáveis do Railway se sua conta tiver taxa diferente.</p>
+    </div>
+
+    <div class="gt-plan-grid">
+        <article class="gt-plan-card gt-featured">
+            <div class="gt-plan-badge">Mais urgente</div>
+            <div class="gt-plan-top">
+                <span class="gt-plan-tag">Produto financeiro</span>
+                <h3>Controle de Gastos G Tech</h3>
+                <p>Ideal para quem quer saber para onde o dinheiro está indo, acompanhar saldo, categorias e receber orientação simples.</p>
+            </div>
+            <div class="gt-price clean-price"><strong>{{ format_brl(public_plans.controle.mensal.base) }}</strong><span>/ 1 mês</span></div>
+            <div class="billing-grid">
+                <a href="{{ url_for('auth.register', plan='controle', billing='mensal') }}" class="billing-card">
+                    <strong>1 mês</strong><span>{{ format_brl(public_plans.controle.mensal.base) }}</span><small>Valor cheio</small>
+                </a>
+                <a href="{{ url_for('auth.register', plan='controle', billing='trimestral') }}" class="billing-card is-highlight">
+                    <strong>3 meses</strong><span>{{ format_brl(public_plans.controle.trimestral.base) }}</span><small>{{ format_brl(public_plans.controle.trimestral.monthly_equivalent) }}/mês</small>
+                </a>
+                <a href="{{ url_for('auth.register', plan='controle', billing='anual') }}" class="billing-card">
+                    <strong>1 ano</strong><span>{{ format_brl(public_plans.controle.anual.base) }}</span><small>{{ format_brl(public_plans.controle.anual.monthly_equivalent) }}/mês</small>
+                </a>
+            </div>
+            <ul class="gt-list">
+                <li>Entradas, saídas, saldo e histórico</li>
+                <li>Categorias e sugestão automática</li>
+                <li>Resumo financeiro em linguagem simples</li>
+                <li>Alertas de gastos, recorrências e saldo</li>
+                <li>IA financeira com Groq/xAI/OpenRouter ou modo local</li>
+                <li>RPA de resumo por e-mail</li>
+            </ul>
+            <div class="gt-plan-actions">
+                <a href="{{ url_for('auth.register', plan='controle', billing='trimestral') }}" class="btn-primary full">Começar Controle</a>
+                <a href="{{ url_for('auth.login', plan='controle') }}" class="btn-secondary full">Entrar no Controle</a>
+            </div>
+        </article>
+
+        <article class="gt-plan-card">
+            <div class="gt-plan-top">
+                <span class="gt-plan-tag">Produto de metas e vendas</span>
+                <h3>MetaSimples</h3>
+                <p>Ideal para vendedores, autônomos e pequenos negócios que precisam transformar meta mensal em rotina diária.</p>
+            </div>
+            <div class="gt-price clean-price"><strong>{{ format_brl(public_plans.metasimples.mensal.base) }}</strong><span>/ 1 mês</span></div>
+            <div class="billing-grid">
+                <a href="{{ url_for('auth.register', plan='metasimples', billing='mensal') }}" class="billing-card">
+                    <strong>1 mês</strong><span>{{ format_brl(public_plans.metasimples.mensal.base) }}</span><small>Valor cheio</small>
+                </a>
+                <a href="{{ url_for('auth.register', plan='metasimples', billing='trimestral') }}" class="billing-card is-highlight">
+                    <strong>3 meses</strong><span>{{ format_brl(public_plans.metasimples.trimestral.base) }}</span><small>{{ format_brl(public_plans.metasimples.trimestral.monthly_equivalent) }}/mês</small>
+                </a>
+                <a href="{{ url_for('auth.register', plan='metasimples', billing='anual') }}" class="billing-card">
+                    <strong>1 ano</strong><span>{{ format_brl(public_plans.metasimples.anual.base) }}</span><small>{{ format_brl(public_plans.metasimples.anual.monthly_equivalent) }}/mês</small>
+                </a>
+            </div>
+            <ul class="gt-list">
+                <li>Meta mensal e meta diária calculada</li>
+                <li>Registro de vendas, atendimentos e fechamentos</li>
+                <li>Checklist comercial diário</li>
+                <li>Dashboard de ritmo do mês</li>
+                <li>Histórico de performance</li>
+                <li>Admin para bloquear/liberar acesso</li>
+            </ul>
+            <div class="gt-plan-actions">
+                <a href="{{ url_for('auth.register', plan='metasimples', billing='trimestral') }}" class="btn-primary full">Começar MetaSimples</a>
+                <a href="{{ url_for('auth.login', plan='metasimples') }}" class="btn-secondary full">Entrar no MetaSimples</a>
+            </div>
+        </article>
+    </div>
+</section>
+
+<section class="gt-section">
+    <div class="gt-section-head">
+        <span class="gt-pill">Sem mistura de produto</span>
+        <h2>Cada cliente entra no painel correto.</h2>
+        <p>Conta Controle abre somente o Controle G Tech. Conta MetaSimples abre somente metas, vendas e performance. Isso evita confusão e melhora a percepção profissional.</p>
+    </div>
+    <div class="gt-feature-grid">
+        <article><strong>Controle G Tech</strong><p>Foco em dinheiro, categorias, saldo, resumo e alertas financeiros.</p></article>
+        <article><strong>MetaSimples</strong><p>Foco em meta, rotina comercial, vendas, checklist e evolução.</p></article>
+        <article><strong>Mercado Pago</strong><p>Checkout por plano com Pix/cartão conforme habilitado na sua conta.</p></article>
+        <article><strong>RPA e IA</strong><p>E-mail automático e assistente configurável sem depender de OCR agora.</p></article>
+    </div>
+</section>
+
+<section class="gt-bottom-cta">
+    <span class="gt-pill">Validação com cliente real</span>
+    <h2>Venda como sistema + acompanhamento G Tech, não como app barato.</h2>
+    <p>Comece com poucos clientes pagando melhor, colete feedback, ajuste rápido e use prova social para escalar.</p>
+    <div class="gt-hero-actions center"><a href="#planos" class="btn-primary">Escolher plano</a><a href="{{ url_for('auth.login') }}" class="btn-secondary">Entrar</a></div>
+</section>
+{% endblock %}

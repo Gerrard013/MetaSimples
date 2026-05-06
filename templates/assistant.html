@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}IA Financeira G Tech{% endblock %}
+
+{% block content %}
+<section class="dashboard-header">
+    <span class="eyebrow">IA Financeira G Tech</span>
+
+    <h1>Assistente do Controle de Gastos.</h1>
+
+    <p>
+        Use para entender saldo, categorias, desperdícios, assinaturas e próximos passos.
+        Sem chave externa, funciona em modo local.
+    </p>
+</section>
+
+<section class="dashboard-layout">
+    <div class="content-stack">
+        <div class="panel">
+            <div class="panel-head">
+                <h2>Pergunte sobre seu dinheiro</h2>
+
+                <p>
+                    A IA G Tech analisa seus lançamentos e transforma os dados em uma orientação simples.
+                </p>
+            </div>
+
+            <form method="post" class="form-grid">
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+
+                <div class="field">
+                    <label>O que você quer entender?</label>
+
+                    <textarea
+                        class="textarea"
+                        name="question"
+                        placeholder="Ex: Estou gastando demais com delivery? Como posso economizar este mês?"
+                    >{{ question or '' }}</textarea>
+                </div>
+
+                <button class="btn-primary full" type="submit">
+                    Perguntar para IA
+                </button>
+            </form>
+        </div>
+
+        {% if answer %}
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>Resposta da IA G Tech</h2>
+
+                    <p>
+                        Orientação gerada com base no seu painel financeiro.
+                    </p>
+                </div>
+
+                <div class="ai-answer">
+                    <strong>Análise financeira</strong>
+
+                    <p>
+                        {{ answer }}
+                    </p>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="panel">
+            <div class="panel-head">
+                <h2>Insights automáticos</h2>
+
+                <p>
+                    Pontos importantes detectados automaticamente no seu controle financeiro.
+                </p>
+            </div>
+
+            <div class="insight-grid">
+                {% for card in finance.intelligence_cards %}
+                    <div class="insight-box">
+                        <span>{{ card.title }}</span>
+
+                        <strong style="font-size: 1rem; line-height: 1.55;">
+                            {{ card.body }}
+                        </strong>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <aside class="sidebar-stack">
+        <div class="panel compact-panel">
+            <h2>Resumo atual</h2>
+
+            <p style="color: var(--muted); line-height: 1.7;">
+                {{ finance.natural_summary }}
+            </p>
+        </div>
+
+        <div class="panel compact-panel">
+            <h2>Meta sugerida</h2>
+
+            <p style="color: var(--muted); line-height: 1.7;">
+                {{ finance.saving_goal }}
+            </p>
+        </div>
+
+        <div class="panel compact-panel">
+            <h2>Próximo passo</h2>
+
+            <p style="color: var(--muted); line-height: 1.7;">
+                Registre seus gastos com frequência para a IA entregar respostas mais precisas.
+            </p>
+
+            <a
+                href="{{ url_for('main.finance_new', type='expense') }}"
+                class="btn-primary full"
+            >
+                Lançar gasto
+            </a>
+        </div>
+    </aside>
+</section>
+{% endblock %}

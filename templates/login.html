@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% set product_name = 'Controle G Tech' if selected_plan == 'controle' else ('MetaSimples' if selected_plan == 'metasimples' else 'G Tech') %}
+{% block title %}Entrar | {{ product_name }}{% endblock %}
+{% block content %}
+<section class="auth-section">
+    <div class="auth-card">
+        <span class="eyebrow">{{ product_name }}</span>
+        <h1>Entrar na sua conta</h1>
+        <p>
+            {% if selected_plan == 'controle' %}
+                Acesse o painel financeiro do Controle G Tech.
+            {% elif selected_plan == 'metasimples' %}
+                Acesse seu painel de metas, vendas e performance.
+            {% else %}
+                Entre e abriremos automaticamente o painel correto da sua conta.
+            {% endif %}
+        </p>
+        <form method="POST" class="form-grid">
+            {{ form.hidden_tag() }}
+            {% if selected_plan %}<input type="hidden" name="plan" value="{{ selected_plan }}">{% endif %}
+            <div class="field">
+                <label>{{ form.email.label }}</label>
+                {{ form.email(class_='input', placeholder='voce@email.com') }}
+            </div>
+            <div class="field">
+                <label>{{ form.password.label }}</label>
+                {{ form.password(class_='input', placeholder='Sua senha') }}
+            </div>
+            <button type="submit" class="btn-primary full">Entrar</button>
+        </form>
+        <p class="auth-footer">Ainda não tem conta? <a href="{{ url_for('auth.register', plan=selected_plan or 'controle') }}">Criar conta</a></p>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Acesso pendente | G Tech{% endblock %}
+{% block content %}
+<section class="auth-section">
+    <div class="auth-card blocked-card">
+        <span class="eyebrow">Regularizar acesso</span>
+        <h1>Seu acesso está suspenso ou aguardando pagamento</h1>
+        <p>Para voltar a usar o sistema, escolha o plano do seu produto e finalize por Pix ou cartão no Mercado Pago.</p>
+        <div class="hero-actions">
+            <a href="{{ url_for('main.payment_checkout', plan=current_user.plan_type if current_user.is_authenticated else 'controle', billing='mensal') }}" class="btn-primary">Pagar 1 mês</a>
+            <a href="{{ url_for('main.index') }}#planos" class="btn-secondary">Ver todos os planos</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

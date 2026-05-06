@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Login admin | MetaSimples{% endblock %}
+{% block content %}
+<section class="auth-section">
+    <div class="auth-card">
+        <h1>Painel administrativo</h1>
+        <p>Entre com o usuário administrador para visualizar leads e controlar bloqueios.</p>
+        <form method="POST" class="form-grid">
+            {{ form.hidden_tag() }}
+            <div class="field">
+                <label>{{ form.email.label }}</label>
+                {{ form.email(class_='input', placeholder='admin@metasimples.com') }}
+            </div>
+            <div class="field">
+                <label>{{ form.password.label }}</label>
+                {{ form.password(class_='input', placeholder='Sua senha') }}
+            </div>
+            <button type="submit" class="btn-primary full">Entrar no painel</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

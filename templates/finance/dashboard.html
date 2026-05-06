@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+
+{% block title %}Controle de Gastos G Tech{% endblock %}
+
+{% block content %}
+<section class="dashboard-header">
+    <span class="eyebrow">Controle de Gastos G Tech</span>
+
+    <h1>Seu dinheiro com clareza, categoria e inteligência.</h1>
+
+    <p>{{ natural_summary }}</p>
+
+    <div class="header-actions">
+        <a href="{{ url_for('main.finance_new', type='income') }}" class="btn-primary">
+            + Entrada
+        </a>
+
+        <a href="{{ url_for('main.finance_new', type='expense') }}" class="btn-secondary">
+            + Saída
+        </a>
+
+        <a href="{{ url_for('main.assistant') }}" class="btn-secondary">
+            IA Financeira
+        </a>
+
+        <span class="status-pill">
+            Resumo automático por e-mail ativo
+        </span>
+    </div>
+</section>
+
+<section class="metrics-grid">
+    <article class="metric-card highlight">
+        <span>Entradas do mês</span>
+        <strong>{{ format_brl(total_income) }}</strong>
+        <small>Recebimentos registrados</small>
+    </article>
+
+    <article class="metric-card">
+        <span>Saídas do mês</span>
+        <strong>{{ format_brl(total_expense) }}</strong>
+        <small>Gastos registrados</small>
+    </article>
+
+    <article class="metric-card">
+        <span>Saldo</span>
+        <strong>{{ format_brl(balance) }}</strong>
+        <small>Entradas - saídas</small>
+    </article>
+
+    <article class="metric-card">
+        <span>Maior categoria</span>
+        <strong>{{ top_category }}</strong>
+        <small>{{ format_brl(top_category_value) }}</small>
+    </article>
+</section>
+
+<section class="dashboard-layout">
+    <div class="content-stack">
+        <div class="panel">
+            <div class="panel-head">
+                <h2>Inteligência financeira</h2>
+                <p>
+                    Insights automáticos para você entender seu dinheiro sem planilha complicada.
+                </p>
+            </div>
+
+            <div class="insight-grid">
+                {% for card in intelligence_cards %}
+                    <div class="insight-box">
+                        <span>{{ card.title }}</span>
+                        <strong style="font-size: 1rem; line-height: 1.55;">
+                            {{ card.body }}
+                        </strong>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-head">
+                <h2>Gastos por categoria</h2>
+                <p>Veja de forma simples para onde seu dinheiro está indo.</p>
+            </div>
+
+            <div class="chart-wrap">
+                <canvas id="financeChart"></canvas>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-head">
+                <h2>Últimos lançamentos</h2>
+                <p>Edite ou exclua registros quando precisar corrigir alguma informação.</p>
+            </div>
+
+            {% if transactions %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Tipo</th>
+                                <th>Estabelecimento</th>
+                                <th>Categoria</th>
+                                <th>Descrição</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for item in transactions %}
+                                <tr>
+                                    <td>{{ item.date.strftime('%d/%m/%Y') }}</td>
+
+                                    <td>
+                                        {% if item.type == 'income' %}
+                                            Entrada
+                                        {% else %}
+                                            Saída
+                                        {% endif %}
+                                    </td>
+
+                                    <td>{{ item.merchant or '-' }}</td>
+
+                                    <td>
+                                        {{ item.category }}
+
+                                        {% if item.ai_suggested_category and not item.category_confirmed %}
+                                            <br>
+                                            <small style="color: var(--muted);">
+                                                IA sugeriu
+                                            </small>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>{{ item.description or '-' }}</td>
+
+                                    <td>{{ format_brl(item.amount) }}</td>
+
+                                    <td>
+                                        <div class="table-actions">
+                                            <a
+                                                class="btn-secondary btn-small"
+                                                href="{{ url_for('main.finance_edit', transaction_id=item.id) }}"
+                                            >
+                                                Editar
+                                            </a>
+
+                                            <form
+                                                method="post"
+                                                action="{{ url_for('main.finance_delete', transaction_id=item.id) }}"
+                                                onsubmit="return confirm('Deseja excluir este lançamento?');"
+                                            >
+                                                <input
+                                                    type="hidden"
+                                                    name="csrf_token"
+                                                    value="{{ csrf_token() }}"
+                                                >
+
+                                                <button class="btn-danger btn-small" type="submit">
+                                                    Excluir
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state-card">
+                    <strong>Nenhum lançamento ainda.</strong>
+
+                    <p>
+                        Comece registrando uma entrada ou saída para liberar seu painel financeiro real.
+                    </p>
+
+                    <a class="btn-primary" href="{{ url_for('main.finance_new') }}">
+                        Criar lançamento
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <aside class="sidebar-stack">
+        <div class="panel compact-panel">
+            <h2>Filtro rápido</h2>
+
+            <form method="get" class="form-grid">
+                <div class="two-col">
+                    <div class="field">
+                        <label>Mês</label>
+                        <input class="input" name="month" value="{{ selected_month }}">
+                    </div>
+
+                    <div class="field">
+                        <label>Ano</label>
+                        <input class="input" name="year" value="{{ selected_year }}">
+                    </div>
+                </div>
+
+                <button class="btn-primary full" type="submit">
+                    Filtrar
+                </button>
+            </form>
+        </div>
+
+        <div class="panel compact-panel">
+            <h2>Resumo automático</h2>
+
+            <p style="color: var(--muted); line-height: 1.7;">
+                A G Tech envia automaticamente resumos financeiros por e-mail.
+                Assim você acompanha entradas, saídas, saldo e categorias sem precisar clicar em nada.
+            </p>
+        </div>
+
+        <div class="panel compact-panel">
+            <h2>Funções premium planejadas</h2>
+
+            <p style="color: var(--muted); line-height: 1.7;">
+                OCR de recibos por foto será ligado depois com API própria.
+                Nesta versão, a inteligência já cobre categorias, resumo financeiro,
+                alertas simples e análise de gastos.
+            </p>
+        </div>
+
+        <div class="panel compact-panel">
+            <h2>Pagamento</h2>
+
+            <p style="color: var(--muted); line-height: 1.7;">
+                Plano Controle G Tech com pagamento por Pix ou cartão via Mercado Pago.
+            </p>
+
+            <div class="payment-options">
+                <a
+                    href="{{ url_for('main.payment_checkout', plan='controle', billing='mensal') }}"
+                    class="btn-secondary full"
+                >
+                    1 mês — R$ 150,00
+                </a>
+
+                <a
+                    href="{{ url_for('main.payment_checkout', plan='controle', billing='trimestral') }}"
+                    class="btn-primary full"
+                >
+                    3 meses — R$ 299,70 à vista
+                </a>
+
+                <a
+                    href="{{ url_for('main.payment_checkout', plan='controle', billing='anual') }}"
+                    class="btn-secondary full"
+                >
+                    1 ano — R$ 958,80 à vista
+                </a>
+            </div>
+        </div>
+    </aside>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const labels = {{ chart_labels|tojson }};
+    const values = {{ chart_values|tojson }};
+    const ctx = document.getElementById('financeChart');
+
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Gastos por categoria',
+                        data: values,
+                        borderWidth: 1,
+                        borderRadius: 10,
+                        maxBarThickness: 52
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        enabled: true,
+                        callbacks: {
+                            label: function(context) {
+                                const value = Number(context.raw || 0);
+
+                                return value.toLocaleString('pt-BR', {
+                                    style: 'currency',
+                                    currency: 'BRL'
+                                });
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            maxRotation: 0,
+                            autoSkip: true
+                        },
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return Number(value).toLocaleString('pt-BR', {
+                                    style: 'currency',
+                                    currency: 'BRL',
+                                    maximumFractionDigits: 0
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+name: RPA Financeiro G Tech
+
+on:
+  schedule:
+    # Relatório diário: 08:00 no horário de Brasília.
+    # GitHub Actions usa UTC. 08:00 BRT = 11:00 UTC.
+    - cron: "0 11 * * *"
+
+    # Relatório mensal: todo dia 1 às 08:15 no horário de Brasília.
+    # Usa o mesmo endpoint, mas serve como reforço de fechamento mensal.
+    - cron: "15 11 1 * *"
+
+  workflow_dispatch:
+
+jobs:
+  send-finance-summaries:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Enviar relatórios financeiros automáticos
+        run: |
+          curl --fail --show-error --silent -X POST "${{ secrets.RPA_ENDPOINT_URL }}" \
+            -H "X-RPA-SECRET: ${{ secrets.RPA_SECRET }}"

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Histórico | MetaSimples{% endblock %}
+{% block content %}
+<section class="panel">
+    <div class="section-heading">
+        <span class="eyebrow">Histórico completo</span>
+        <h1>Todos os seus registros</h1>
+        <p>Consulte rapidamente o desempenho salvo no sistema.</p>
+    </div>
+
+    {% if results %}
+        <div class="history-list-mobile">
+            {% for item in results %}
+            <article class="history-card">
+                <div class="history-card-top">
+                    <div class="history-card-chip">
+                        <span class="history-label">Data</span>
+                        <strong>{{ item.date.strftime('%d/%m/%Y') }}</strong>
+                    </div>
+                    <div class="history-card-chip history-card-chip-highlight">
+                        <span class="history-label">Vendas</span>
+                        <strong>{{ format_brl(item.sales_value) }}</strong>
+                    </div>
+                </div>
+
+                <div class="history-card-grid">
+                    <div class="history-card-metric">
+                        <span class="history-label">Ganhos</span>
+                        <strong>{{ format_brl(item.earnings_value) }}</strong>
+                    </div>
+                    <div class="history-card-metric">
+                        <span class="history-label">Atendimentos</span>
+                        <strong>{{ item.attendance_count }}</strong>
+                    </div>
+                    <div class="history-card-metric">
+                        <span class="history-label">Fechamentos</span>
+                        <strong>{{ item.closed_deals }}</strong>
+                    </div>
+                </div>
+
+                <div class="history-card-notes">
+                    <span class="history-label">Observações</span>
+                    <p>{{ item.notes or 'Sem observações.' }}</p>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        <div class="table-wrap history-table-desktop">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Vendas</th>
+                        <th>Ganhos</th>
+                        <th>Atendimentos</th>
+                        <th>Fechamentos</th>
+                        <th>Observações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in results %}
+                    <tr>
+                        <td>{{ item.date.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ format_brl(item.sales_value) }}</td>
+                        <td>{{ format_brl(item.earnings_value) }}</td>
+                        <td>{{ item.attendance_count }}</td>
+                        <td>{{ item.closed_deals }}</td>
+                        <td>{{ item.notes or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state-card">
+            <strong>Nenhum registro encontrado.</strong>
+            <p>Assim que você salvar os resultados do dia, eles vão aparecer aqui.</p>
+            <a href="{{ url_for('main.daily_entry') }}" class="btn-primary">Lançar primeiro dia</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

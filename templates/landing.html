@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Garantir minha vaga | MetaSimples{% endblock %}
+{% block content %}
+<section class="lead-hero">
+    <div class="lead-copy">
+        <span class="eyebrow">Captação de leads</span>
+        <h1>Organize metas, vendas e rotina comercial em um só lugar.</h1>
+        <p>Cadastre-se para receber acesso, detalhes do produto e prioridade na próxima liberação.</p>
+        <ul class="mini-list">
+            <li>✔ Estrutura simples para vender mais</li>
+            <li>✔ Acompanhamento diário de resultados</li>
+            <li>✔ Ideal para vendedores, autônomos e pequenos times</li>
+        </ul>
+    </div>
+
+    <div class="lead-card">
+        <h2>Quero saber mais</h2>
+        <form method="POST" class="form-grid" data-validate-form="lead">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="field">
+                <label for="name">Nome</label>
+                <input class="input" type="text" id="name" name="name" placeholder="Seu nome" required minlength="2">
+            </div>
+            <div class="field">
+                <label for="email">E-mail</label>
+                <input class="input" type="email" id="email" name="email" placeholder="voce@email.com" required data-email-check="true">
+                <small class="field-help" data-feedback-for="email"></small>
+            </div>
+            <div class="field">
+                <label for="whatsapp">WhatsApp</label>
+                <input class="input" type="text" id="whatsapp" name="whatsapp" placeholder="(11) 91234-5678" required data-whatsapp-check="true">
+                <small class="field-help" data-feedback-for="whatsapp"></small>
+            </div>
+            <button type="submit" class="btn-primary full">Garantir minha vaga</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

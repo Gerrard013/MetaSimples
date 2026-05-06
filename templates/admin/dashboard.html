@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard administrativo | MetaSimples{% endblock %}
+{% block content %}
+<section class="dashboard-header">
+    <span class="eyebrow">Administração</span>
+    <h1>Painel administrativo</h1>
+    <p>Controle usuários, libere acesso, corte inadimplentes e acompanhe os leads do sistema.</p>
+</section>
+
+<section class="metrics-grid">
+    <article class="metric-card"><span>Total de leads</span><strong>{{ stats.total_leads }}</strong></article>
+    <article class="metric-card"><span>Total de usuários</span><strong>{{ stats.total_users }}</strong></article>
+    <article class="metric-card"><span>Usuários bloqueados</span><strong>{{ stats.blocked_users }}</strong></article>
+    <article class="metric-card"><span>Pagamentos pendentes</span><strong>{{ stats.pending_payments }}</strong></article>
+</section>
+
+<section class="panel">
+    <form method="GET" class="form-grid admin-search-form">
+        <div class="field">
+            <label for="q">Buscar usuário ou lead</label>
+            <input id="q" name="q" class="input" value="{{ search }}" placeholder="Nome, e-mail ou WhatsApp">
+        </div>
+        <button class="btn-primary" type="submit">Buscar</button>
+    </form>
+</section>
+
+<section class="panel table-panel">
+    <h2>Usuários do sistema</h2>
+    <div class="table-wrap">
+        <table class="data-table admin-users-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>WhatsApp</th>
+                    <th>Status</th>
+                    <th>Teste</th>
+                    <th>Pago até</th>
+                    <th>Motivo</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.whatsapp or '-' }}</td>
+                    <td>
+                        {% if user.is_admin %}
+                            <span class="badge badge-admin">Admin</span>
+                        {% elif user.is_blocked %}
+                            <span class="badge badge-danger">Bloqueado</span>
+                        {% elif user.can_access_system(now) %}
+                            <span class="badge badge-success">Ativo</span>
+                        {% else %}
+                            <span class="badge badge-warning">Expirado</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.trial_expires_at.strftime('%d/%m/%Y') if user.trial_expires_at else '-' }}</td>
+                    <td>{{ user.paid_until.strftime('%d/%m/%Y') if user.paid_until else '-' }}</td>
+                    <td>{{ user.blocked_reason or '-' }}</td>
+                    <td>
+                        {% if not user.is_admin %}
+                        <div class="admin-actions-stack">
+                            <form method="POST" action="{{ url_for('main.toggle_user_block', user_id=user.id) }}" class="inline-form admin-inline-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                <input type="hidden" name="action" value="{% if user.is_blocked %}unblock{% else %}block{% endif %}" />
+                                <input class="input" type="text" name="reason" placeholder="Motivo do bloqueio/desbloqueio">
+                                <button class="{% if user.is_blocked %}btn-secondary{% else %}btn-danger{% endif %}" type="submit">
+                                    {% if user.is_blocked %}Desbloquear{% else %}Bloquear{% endif %}
+                                </button>
+                            </form>
+
+                            <form method="POST" action="{{ url_for('main.grant_user_access', user_id=user.id) }}" class="inline-form admin-inline-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                <input class="input input-small" type="number" name="paid_days" min="1" max="3650" value="30" placeholder="Dias">
+                                <input class="input" type="text" name="reason" placeholder="Motivo da liberação">
+                                <button class="btn-primary" type="submit">Liberar acesso</button>
+                            </form>
+                        </div>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8">Nenhum usuário cadastrado.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="panel table-panel">
+    <h2>Leads capturados</h2>
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>WhatsApp</th>
+                    <th>Origem</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lead in leads %}
+                <tr>
+                    <td>{{ lead.name }}</td>
+                    <td>{{ lead.email }}</td>
+                    <td>{{ lead.whatsapp }}</td>
+                    <td>{{ lead.source }}</td>
+                    <td>{{ lead.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5">Nenhum lead cadastrado ainda.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="panel table-panel">
+    <h2>Pagamentos recentes</h2>
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Usuário</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Vencimento</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr>
+                    <td>#{{ payment.id }}</td>
+                    <td>{{ payment.user.name }}</td>
+                    <td>{{ format_brl(payment.amount) }}</td>
+                    <td>{{ payment.status }}</td>
+                    <td>{{ payment.due_date.strftime('%d/%m/%Y') if payment.due_date else '-' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5">Nenhum pagamento cadastrado ainda.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

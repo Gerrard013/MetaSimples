@@ -1,0 +1,90 @@
+{{% extends 'base.html' %}
+
+{% block title %}
+    {% if editing %}
+        Editar lançamento | Controle G Tech
+    {% else %}
+        Novo lançamento | Controle G Tech
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="auth-card">
+        <span class="eyebrow">Controle de Gastos</span>
+
+        <h1>
+            {% if editing %}
+                Editar lançamento
+            {% else %}
+                Novo lançamento
+            {% endif %}
+        </h1>
+
+        <p style="color: var(--muted); line-height: 1.7;">
+            {% if editing %}
+                Atualize as informações deste lançamento. As mudanças entram direto no seu painel financeiro.
+            {% else %}
+                Registre uma entrada ou saída. Se você informar o estabelecimento, a IA sugere a categoria automaticamente.
+            {% endif %}
+        </p>
+
+        <form method="post" class="form-grid">
+            {{ form.hidden_tag() }}
+
+            <div class="field">
+                <label>{{ form.type.label }}</label>
+                {{ form.type(class_='input') }}
+            </div>
+
+            <div class="two-col">
+                <div class="field">
+                    <label>{{ form.date.label }}</label>
+                    {{ form.date(class_='input') }}
+                </div>
+
+                <div class="field">
+                    <label>{{ form.amount.label }}</label>
+                    {{ form.amount(class_='input', placeholder='Ex: 49,90') }}
+                </div>
+            </div>
+
+            <div class="field">
+                <label>{{ form.merchant.label }}</label>
+                {{ form.merchant(class_='input', placeholder='Ex: Ifood, Uber, Mercado, Cliente João') }}
+
+                <small class="field-help">
+                    A IA usa esse campo para sugerir categoria.
+                </small>
+            </div>
+
+            <div class="field">
+                <label>{{ form.category.label }}</label>
+                {{ form.category(class_='input', placeholder='Deixe vazio para a IA sugerir') }}
+            </div>
+
+            <div class="field">
+                <label>{{ form.payment_method.label }}</label>
+                {{ form.payment_method(class_='input', placeholder='Pix, dinheiro, cartão...') }}
+            </div>
+
+            <div class="field">
+                <label>{{ form.description.label }}</label>
+                {{ form.description(class_='input', placeholder='Descrição opcional') }}
+            </div>
+
+            <button class="btn-primary full" type="submit">
+                {% if editing %}
+                    Salvar alterações
+                {% else %}
+                    Salvar lançamento
+                {% endif %}
+            </button>
+
+            <a class="btn-secondary full" href="{{ url_for('main.finance_dashboard') }}">
+                Voltar para o painel
+            </a>
+        </form>
+    </div>
+</section>
+{% endblock %}
