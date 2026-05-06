@@ -10,12 +10,12 @@ from routes.auth import auth_bp
 from routes.main import main_bp
 
 
-
 def ensure_admin_user(app: Flask) -> None:
     with app.app_context():
         admin_email = app.config.get('ADMIN_EMAIL')
         admin_password = app.config.get('ADMIN_PASSWORD')
         existing_admin = User.query.filter_by(email=admin_email).first()
+
         if not existing_admin:
             admin = User(
                 name='Administrador MetaSimples',
@@ -29,11 +29,11 @@ def ensure_admin_user(app: Flask) -> None:
             db.session.commit()
 
 
-
 def ensure_schema_updates(app: Flask) -> None:
     """Atualizações seguras para produção/local sem precisar rodar Alembic manual agora."""
     with app.app_context():
         engine_name = db.engine.url.get_backend_name()
+
         with db.engine.begin() as conn:
             if engine_name.startswith('postgresql'):
                 user_columns = {
@@ -50,8 +50,10 @@ def ensure_schema_updates(app: Flask) -> None:
                     'paid_until': "ALTER TABLE users ADD COLUMN IF NOT EXISTS paid_until TIMESTAMP",
                     'access_blocked_at': "ALTER TABLE users ADD COLUMN IF NOT EXISTS access_blocked_at TIMESTAMP",
                 }
+
                 for sql in user_columns.values():
                     conn.exec_driver_sql(sql)
+
                 for idx_sql in [
                     "CREATE INDEX IF NOT EXISTS idx_users_plan_type ON users(plan_type)",
                     "CREATE INDEX IF NOT EXISTS idx_users_email_verified ON users(email_verified)",
@@ -78,13 +80,17 @@ def ensure_schema_updates(app: Flask) -> None:
                         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
+
                 for column, sql_type in {
                     'merchant': 'VARCHAR(120)',
                     'ai_suggested_category': 'VARCHAR(80)',
                     'category_confirmed': 'BOOLEAN NOT NULL DEFAULT TRUE',
                     'is_recurring': 'BOOLEAN NOT NULL DEFAULT FALSE',
                 }.items():
-                    conn.exec_driver_sql(f"ALTER TABLE finance_transactions ADD COLUMN IF NOT EXISTS {column} {sql_type}")
+                    conn.exec_driver_sql(
+                        f"ALTER TABLE finance_transactions ADD COLUMN IF NOT EXISTS {column} {sql_type}"
+                    )
+
                 for idx_sql in [
                     "CREATE INDEX IF NOT EXISTS idx_finance_transactions_user_id ON finance_transactions(user_id)",
                     "CREATE INDEX IF NOT EXISTS idx_finance_transactions_date ON finance_transactions(date)",
@@ -102,13 +108,28 @@ def ensure_schema_updates(app: Flask) -> None:
                     'billing_cycle': 'VARCHAR(30)',
                     'duration_days': 'INTEGER',
                 }
+
                 for column, sql_type in payment_cols.items():
-                    conn.exec_driver_sql(f"ALTER TABLE payments ADD COLUMN IF NOT EXISTS {column} {sql_type}")
-                conn.exec_driver_sql("CREATE INDEX IF NOT EXISTS idx_payments_gateway_payment_id ON payments(gateway_payment_id)")
-                conn.exec_driver_sql("CREATE INDEX IF NOT EXISTS idx_payments_plan_type ON payments(plan_type)")
-                conn.exec_driver_sql("CREATE INDEX IF NOT EXISTS idx_payments_billing_cycle ON payments(billing_cycle)")
+                    conn.exec_driver_sql(
+                        f"ALTER TABLE payments ADD COLUMN IF NOT EXISTS {column} {sql_type}"
+                    )
+
+                conn.exec_driver_sql(
+                    "CREATE INDEX IF NOT EXISTS idx_payments_gateway_payment_id ON payments(gateway_payment_id)"
+                )
+                conn.exec_driver_sql(
+                    "CREATE INDEX IF NOT EXISTS idx_payments_plan_type ON payments(plan_type)"
+                )
+                conn.exec_driver_sql(
+                    "CREATE INDEX IF NOT EXISTS idx_payments_billing_cycle ON payments(billing_cycle)"
+                )
+
             else:
-                user_cols = [row[1] for row in conn.exec_driver_sql("PRAGMA table_info(users)").fetchall()]
+                user_cols = [
+                    row[1]
+                    for row in conn.exec_driver_sql("PRAGMA table_info(users)").fetchall()
+                ]
+
                 sqlite_user_adds = {
                     'whatsapp': "ALTER TABLE users ADD COLUMN whatsapp VARCHAR(20)",
                     'plan_type': "ALTER TABLE users ADD COLUMN plan_type VARCHAR(30) NOT NULL DEFAULT 'metasimples'",
@@ -123,26 +144,46 @@ def ensure_schema_updates(app: Flask) -> None:
                     'paid_until': "ALTER TABLE users ADD COLUMN paid_until DATETIME",
                     'access_blocked_at': "ALTER TABLE users ADD COLUMN access_blocked_at DATETIME",
                 }
+
                 for column, sql in sqlite_user_adds.items():
                     if column not in user_cols:
                         conn.exec_driver_sql(sql)
 
-                finance_tables = conn.exec_driver_sql("SELECT name FROM sqlite_master WHERE type='table' AND name='finance_transactions'").fetchall()
+                finance_tables = conn.exec_driver_sql(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='finance_transactions'"
+                ).fetchall()
+
                 if finance_tables:
-                    finance_cols = [row[1] for row in conn.exec_driver_sql("PRAGMA table_info(finance_transactions)").fetchall()]
+                    finance_cols = [
+                        row[1]
+                        for row in conn.exec_driver_sql(
+                            "PRAGMA table_info(finance_transactions)"
+                        ).fetchall()
+                    ]
+
                     sqlite_finance_adds = {
                         'merchant': "ALTER TABLE finance_transactions ADD COLUMN merchant VARCHAR(120)",
                         'ai_suggested_category': "ALTER TABLE finance_transactions ADD COLUMN ai_suggested_category VARCHAR(80)",
                         'category_confirmed': "ALTER TABLE finance_transactions ADD COLUMN category_confirmed BOOLEAN NOT NULL DEFAULT 1",
                         'is_recurring': "ALTER TABLE finance_transactions ADD COLUMN is_recurring BOOLEAN NOT NULL DEFAULT 0",
                     }
+
                     for column, sql in sqlite_finance_adds.items():
                         if column not in finance_cols:
                             conn.exec_driver_sql(sql)
 
-                payment_tables = conn.exec_driver_sql("SELECT name FROM sqlite_master WHERE type='table' AND name='payments'").fetchall()
+                payment_tables = conn.exec_driver_sql(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='payments'"
+                ).fetchall()
+
                 if payment_tables:
-                    payment_cols = [row[1] for row in conn.exec_driver_sql("PRAGMA table_info(payments)").fetchall()]
+                    payment_cols = [
+                        row[1]
+                        for row in conn.exec_driver_sql(
+                            "PRAGMA table_info(payments)"
+                        ).fetchall()
+                    ]
+
                     sqlite_payment_adds = {
                         'net_amount': "ALTER TABLE payments ADD COLUMN net_amount NUMERIC(10,2)",
                         'fee_amount': "ALTER TABLE payments ADD COLUMN fee_amount NUMERIC(10,2)",
@@ -151,9 +192,11 @@ def ensure_schema_updates(app: Flask) -> None:
                         'billing_cycle': "ALTER TABLE payments ADD COLUMN billing_cycle VARCHAR(30)",
                         'duration_days': "ALTER TABLE payments ADD COLUMN duration_days INTEGER",
                     }
+
                     for column, sql in sqlite_payment_adds.items():
                         if column not in payment_cols:
                             conn.exec_driver_sql(sql)
+
 
 def create_app() -> Flask:
     app = Flask(__name__)
@@ -168,10 +211,17 @@ def create_app() -> Flask:
     with app.app_context():
         import models  # noqa: F401
         db.create_all()
+
     ensure_schema_updates(app)
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
+
+    # Endpoint interno chamado pelo GitHub Actions/curl.
+    # Ele não usa formulário/navegador, então não deve exigir CSRF.
+    # A proteção dele é feita por X-RPA-SECRET dentro da própria rota.
+    csrf.exempt(app.view_functions['main.rpa_send_finance_summaries'])
+
     ensure_admin_user(app)
 
     @app.errorhandler(404)
