@@ -61,7 +61,7 @@ def controle_required(view_func):
         if current_user.is_admin:
             return view_func(*args, **kwargs)
 
-        if current_user.plan_type != 'controle':
+        if not current_user.has_controle_access:
             flash('Este recurso pertence ao Controle de Gastos G Tech.', 'error')
             return redirect(url_for('main.dashboard'))
 
@@ -77,8 +77,8 @@ def metasimples_required(view_func):
         if current_user.is_admin:
             return view_func(*args, **kwargs)
 
-        if current_user.plan_type == 'controle':
-            flash('Seu plano atual é o Controle de Gastos G Tech.', 'info')
+        if not current_user.has_metasimples_access:
+            flash('Este recurso pertence ao MetaSimples.', 'info')
             return redirect(url_for('main.finance_dashboard'))
 
         return view_func(*args, **kwargs)
@@ -137,10 +137,11 @@ def enforce_block_rule():
         'main.assistant',
     }
 
-    if current_user.plan_type == 'controle' and endpoint in metasimples_endpoints:
+    if endpoint in metasimples_endpoints and not current_user.has_metasimples_access:
+        flash('O MetaSimples é um produto separado do Controle G Tech.', 'info')
         return redirect(url_for('main.finance_dashboard'))
 
-    if current_user.plan_type == 'metasimples' and endpoint in controle_endpoints:
+    if endpoint in controle_endpoints and not current_user.has_controle_access:
         flash('O Controle de Gastos é um produto separado do MetaSimples.', 'info')
         return redirect(url_for('main.dashboard'))
 
@@ -240,7 +241,7 @@ def index():
         if current_user.is_admin:
             return redirect(url_for('main.admin_dashboard'))
 
-        if current_user.plan_type == 'controle':
+        if current_user.has_controle_access:
             return redirect(url_for('main.finance_dashboard'))
 
         goal = get_user_goal(current_user.id)
@@ -953,7 +954,7 @@ def rpa_send_finance_summaries():
 
     users = User.query.filter(
         User.is_admin.is_(False),
-        User.plan_type == 'controle',
+        User.plan_type.in_(('controle', 'both')),
         User.is_blocked.is_(False),
     ).all()
 
@@ -1050,20 +1051,19 @@ def payment_checkout():
     )
     billing = normalize_billing(request.args.get('billing') or 'mensal')
 
+    if plan == 'both':
+        plan = 'controle'
+
     if not current_user.is_authenticated:
         flash('Crie sua conta para vincular o pagamento ao seu acesso.', 'info')
         return redirect(url_for('auth.register', plan=plan, billing=billing))
-
-    if not current_user.is_admin and current_user.plan_type != plan:
-        flash('Esse pagamento pertence a outro produto. Abrimos o plano correto da sua conta.', 'warning')
-        plan = current_user.plan_type
 
     ok, result = create_mercadopago_preference(current_user, plan, billing)
 
     if not ok:
         flash(f'Não conseguimos iniciar o pagamento: {result}', 'error')
 
-        if current_user.is_authenticated and current_user.plan_type == 'controle':
+        if current_user.is_authenticated and current_user.has_controle_access:
             return redirect(url_for('main.finance_dashboard'))
 
         return redirect(url_for('main.index'))
@@ -1100,7 +1100,7 @@ def payment_success():
             'info',
         )
 
-    if current_user.plan_type == 'controle':
+    if current_user.has_controle_access:
         return redirect(url_for('main.finance_dashboard'))
 
     return redirect(url_for('main.dashboard'))
@@ -1118,7 +1118,7 @@ def payment_pending():
 def payment_failure():
     flash('O pagamento não foi aprovado. Você pode tentar novamente com Pix ou cartão.', 'error')
 
-    if current_user.is_authenticated and current_user.plan_type == 'controle':
+    if current_user.is_authenticated and current_user.has_controle_access:
         return redirect(url_for('main.finance_dashboard'))
 
     return redirect(url_for('main.index'))
