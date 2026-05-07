@@ -24,7 +24,7 @@ def _product_home_for(user: User):
     if user.is_admin:
         return url_for('main.admin_dashboard')
 
-    if user.plan_type == 'controle':
+    if getattr(user, 'has_controle_access', False):
         return url_for('main.finance_dashboard')
 
     goal = Goal.query.filter_by(user_id=user.id).order_by(Goal.updated_at.desc()).first()
@@ -182,8 +182,13 @@ def login():
 
         login_user(user, remember=True)
 
-        if selected_plan and user.plan_type != selected_plan:
-            flash('Essa conta pertence a outro produto. Abrimos o painel correto para evitar mistura.', 'warning')
+        if selected_plan:
+            if selected_plan == 'controle' and not getattr(user, 'has_controle_access', False):
+                flash('Essa conta pertence a outro produto. Abrimos o painel correto para evitar mistura.', 'warning')
+            elif selected_plan == 'metasimples' and not getattr(user, 'has_metasimples_access', False):
+                flash('Essa conta pertence a outro produto. Abrimos o painel correto para evitar mistura.', 'warning')
+            else:
+                flash('Login realizado com sucesso.', 'success')
         else:
             flash('Login realizado com sucesso.', 'success')
 
@@ -251,11 +256,10 @@ def admin_login():
 def validate_email_api():
     email = normalize_email(request.args.get('email', ''))
     exists_in_users = bool(User.query.filter_by(email=email).first()) if email else False
-    exists_in_leads = bool(Lead.query.filter_by(email=email).first()) if email else False
 
     return {
         'valid': is_valid_email(email, check_deliverability=False),
-        'exists': exists_in_users or exists_in_leads,
+        'exists': exists_in_users,
     }
 
 
@@ -263,10 +267,9 @@ def validate_email_api():
 def validate_whatsapp_api():
     whatsapp = normalize_whatsapp_br(request.args.get('whatsapp', ''))
     exists_in_users = bool(User.query.filter_by(whatsapp=whatsapp).first()) if whatsapp else False
-    exists_in_leads = bool(Lead.query.filter_by(whatsapp=whatsapp).first()) if whatsapp else False
 
     return {
         'valid': is_valid_whatsapp_br(whatsapp),
-        'exists': exists_in_users or exists_in_leads,
+        'exists': exists_in_users,
         'formatted': format_whatsapp_br(whatsapp),
     }
