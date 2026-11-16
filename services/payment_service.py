@@ -302,18 +302,35 @@ def sync_mercadopago_payment(mp_payment_id: str) -> tuple[bool, str]:
         if not external_reference:
             return False, 'Pagamento sem external_reference.'
 
-        payment = Payment.query.filter_by(external_reference=external_reference).first()
-
+        payment = Payment.query.filter_by(
+            external_reference=external_reference, gateway='mercadopago'
+        ).first()
         if not payment:
             return False, 'Pagamento não encontrado no sistema.'
 
-        payment.status = status or payment.status
+        # A genuine API response must match the exact expected amount/currency.
+        # An approved payment of R$ 1 must never unlock a R$ 150 plan.
+        try:
+            charged = Decimal(str(data.get('transaction_amount', '')))
+            expected = Decimal(str(payment.amount))
+        except (ValueError, TypeError, ArithmeticError):
+            return False, 'Pagamento sem valor válido.'
+        if data.get('currency_id') != 'BRL' or abs(charged - expected) > Decimal('0.01'):
+            current_app.logger.warning('Pagamento com valor ou moeda divergente: %s', mp_payment_id)
+            return False, 'Pagamento com valor ou moeda divergente.'
 
         if status == 'approved':
-            approve_payment(payment, mp_payment_id=str(mp_payment_id))
+            # Idempotency: repeat webhook notifications must not extend plans.
+            if payment.status != 'approved':
+                approve_payment(payment, mp_payment_id=str(mp_payment_id))
+            elif not payment.gateway_payment_id:
+                payment.gateway_payment_id = str(mp_payment_id)
+        elif payment.status != 'approved' and status in {
+            'pending', 'in_process', 'rejected', 'cancelled', 'refunded', 'charged_back'
+        }:
+            payment.status = status
 
         db.session.commit()
-
         return True, status or 'updated'
 
     except requests.RequestException as exc:
