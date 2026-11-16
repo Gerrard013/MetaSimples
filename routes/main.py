@@ -1074,26 +1074,23 @@ def payment_checkout():
 @main_bp.route('/payment/success')
 @login_required
 def payment_success():
+    # Redirect query parameters are UNTRUSTED. Never approve access based on
+    # ?status=approved, and never reassign a payment from a guessed reference.
     external_reference = request.args.get('external_reference', '')
-    status = request.args.get('status', 'approved')
     collection_id = request.args.get('collection_id') or request.args.get('payment_id')
+    if collection_id and str(collection_id).isdigit() and len(str(collection_id)) <= 25:
+        sync_mercadopago_payment(str(collection_id))
 
     payment = (
-        Payment.query.filter_by(external_reference=external_reference).first()
+        Payment.query.filter_by(external_reference=external_reference, user_id=current_user.id).first()
         if external_reference
         else None
     )
 
-    if collection_id:
-        sync_mercadopago_payment(str(collection_id))
-
-        if external_reference:
-            payment = Payment.query.filter_by(external_reference=external_reference).first()
-
-    if payment and (status == 'approved' or payment.status == 'approved'):
-        approve_payment(payment, mp_payment_id=str(collection_id) if collection_id else None)
-        db.session.commit()
-        flash('Pagamento aprovado. Seu acesso foi liberado automaticamente.', 'success')
+    # Payment is marked approved ONLY by authoritative Mercado Pago API
+    # verification performed in sync_mercadopago_payment.
+    if payment and payment.status == 'approved':
+        flash('Pagamento confirmado pelo Mercado Pago. Seu acesso está liberado.', 'success')
     else:
         flash(
             'Pagamento recebido pelo Mercado Pago. Assim que for aprovado, seu acesso será liberado.',
