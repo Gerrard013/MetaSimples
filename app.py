@@ -8,6 +8,7 @@ from database.db import csrf, db, login_manager, migrate
 from models.user import User
 from routes.auth import auth_bp
 from routes.main import main_bp
+from routes.gtech_checkout import gtech_checkout_bp
 
 
 def ensure_admin_user(app: Flask) -> None:
@@ -216,6 +217,7 @@ def create_app() -> Flask:
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
+    app.register_blueprint(gtech_checkout_bp)
 
     # Endpoint interno chamado pelo GitHub Actions/curl.
     # Ele não usa formulário/navegador, então não deve exigir CSRF.
@@ -224,6 +226,9 @@ def create_app() -> Flask:
     # Mercado Pago is a server-to-server webhook; protect it by independently
     # verifying payment ID, merchant token, external_reference, amount and currency.
     csrf.exempt(app.view_functions['main.mercadopago_webhook'])
+    # Server-to-server endpoints require HMAC or verified Mercado Pago signature.
+    csrf.exempt(app.view_functions['gtech_checkout.create_store_checkout'])
+    csrf.exempt(app.view_functions['gtech_checkout.gtech_payment_webhook'])
 
     ensure_admin_user(app)
 
