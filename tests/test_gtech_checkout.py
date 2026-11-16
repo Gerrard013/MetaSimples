@@ -131,8 +131,10 @@ class GTechMerchantBridgeTests(unittest.TestCase):
         from models.payment import Payment
         from services.payment_service import sync_mercadopago_payment
         with app.app_context():
-            user=User.query.filter_by(email="admin@unit-test.local").first()
-            self.assertIsNotNone(user)
+            user=User(name="Test Admin",email="admin@unit-test.local",
+                      password_hash="no-login-test-only",is_admin=True)
+            db.session.add(user)
+            db.session.flush()
             pending=Payment(user_id=user.id,amount=150,status="pending",
                             gateway="mercadopago",external_reference="unit-test-subscription")
             db.session.add(pending)
