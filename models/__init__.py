@@ -1,3 +1,4 @@
+from models.gtech_checkout import GTechCheckout
 from models.user import User
 from models.goal import Goal
 from models.daily_result import DailyResult
@@ -7,6 +8,7 @@ from models.payment import Payment
 from models.finance_transaction import FinanceTransaction
 
 __all__ = [
+    "GTechCheckout",
     'User',
     'Goal',
     'DailyResult',
