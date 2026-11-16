@@ -118,6 +118,36 @@ class GTechMerchantBridgeTests(unittest.TestCase):
             self.assertEqual(row.status,"approved")
             self.assertEqual(row.gateway_payment_id,"123456789")
 
+    def test_legacy_metasimples_return_no_longer_trusts_url_status(self):
+        import inspect
+        from routes.main import payment_success
+        source=inspect.getsource(payment_success)
+        self.assertNotIn("request.args.get('status'",source)
+        self.assertNotIn("approve_payment(payment",source)
+        self.assertIn("payment.status == 'approved'",source)
+
+    def test_legacy_subscription_rejects_underpayment(self):
+        from models.user import User
+        from models.payment import Payment
+        from services.payment_service import sync_mercadopago_payment
+        with app.app_context():
+            user=User.query.filter_by(email="admin@unit-test.local").first()
+            self.assertIsNotNone(user)
+            pending=Payment(user_id=user.id,amount=150,status="pending",
+                            gateway="mercadopago",external_reference="unit-test-subscription")
+            db.session.add(pending)
+            db.session.commit()
+            with patch("services.payment_service.requests.get",return_value=MockResponse({
+                "external_reference":"unit-test-subscription",
+                "transaction_amount":1,
+                "currency_id":"BRL",
+                "status":"approved",
+            })):
+                ok,message=sync_mercadopago_payment("123456789")
+            self.assertFalse(ok)
+            self.assertIn("divergente",message)
+            self.assertEqual(db.session.get(Payment,pending.id).status,"pending")
+
     def test_status_is_private_and_not_query_parameter_based(self):
         self.create_mock_order(1000)
         no_sig=self.client.get("/api/gtech/status/"+self.order_id)
