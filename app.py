@@ -221,6 +221,9 @@ def create_app() -> Flask:
     # Ele não usa formulário/navegador, então não deve exigir CSRF.
     # A proteção dele é feita por X-RPA-SECRET dentro da própria rota.
     csrf.exempt(app.view_functions['main.rpa_send_finance_summaries'])
+    # Mercado Pago is a server-to-server webhook; protect it by independently
+    # verifying payment ID, merchant token, external_reference, amount and currency.
+    csrf.exempt(app.view_functions['main.mercadopago_webhook'])
 
     ensure_admin_user(app)
 
